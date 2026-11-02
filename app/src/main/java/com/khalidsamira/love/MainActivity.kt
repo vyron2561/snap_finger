@@ -359,6 +359,16 @@ class MainActivity : Activity() {
             openImagePicker(REQUEST_LOGO)
         }
 
+        addSection("Personal snap recognition")
+        addAction(
+            "Learn my snap",
+            "KOFAXA records and analyzes 10 of your snaps",
+            "✦"
+        ) {
+            dialog.dismiss()
+            startSnapLearning()
+        }
+
         addSection("Smart controls")
         val pocketRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -434,6 +444,73 @@ class MainActivity : Activity() {
             }
         }
         dialog.show()
+    }
+
+    private fun startSnapLearning() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+            checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 1001)
+            Toast.makeText(this, "Allow microphone access, then choose Learn my snap again.", Toast.LENGTH_LONG).show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Learn your finger snap")
+            .setMessage("KOFAXA will detect 10 snaps using its microphone. Make one clear snap at a time, about one second apart, with the phone 20–30 cm away. Keep the room quiet. This creates a local sound profile; it is not guaranteed identity security.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Start learning") { _, _ ->
+                getSharedPreferences("snap_signature", MODE_PRIVATE).edit()
+                    .putBoolean("learning", true).putInt("learn_count", 0)
+                    .remove("template").remove("samples").apply()
+                val intent = Intent(this, SnapWakeService::class.java).apply {
+                    action = SnapWakeService.ACTION_LEARN_SIGNATURE
+                }
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
+                    else startService(intent)
+                    showSnapLearningProgress()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Could not start learning: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+            .show()
+    }
+
+    private fun showSnapLearningProgress() {
+        val message = TextView(this).apply {
+            text = "Detected 0 of 10 snaps"
+            textSize = 17f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            setPadding(dp(24), dp(24), dp(24), dp(24))
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Learning your snap")
+            .setView(message)
+            .setNegativeButton("Close") { _, _ ->
+                getSharedPreferences("snap_signature", MODE_PRIVATE).edit()
+                    .putBoolean("learning", false).remove("samples").apply()
+            }
+            .create()
+        dialog.show()
+        val poll = object : Runnable {
+            override fun run() {
+                val p = getSharedPreferences("snap_signature", MODE_PRIVATE)
+                val count = p.getInt("learn_count", 0)
+                val complete = p.getString("template", null) != null
+                message.text = if (complete) {
+                    "Your snap profile is saved.\n10 of 10 samples analyzed."
+                } else {
+                    "Detected $count of 10 snaps\nMake each snap clearly, one second apart."
+                }
+                if (complete) {
+                    dialog.setTitle("Learning complete")
+                } else if (dialog.isShowing) {
+                    handler.postDelayed(this, 500)
+                }
+            }
+        }
+        handler.post(poll)
     }
 
     private fun notifySnapServiceSettingsChanged() {
