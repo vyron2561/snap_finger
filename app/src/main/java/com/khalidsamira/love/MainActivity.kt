@@ -360,22 +360,47 @@ class MainActivity : Activity() {
         }
 
         addSection("Smart controls")
-        addAction(
-            "Pocket Protection",
-            if (pocketEnabled) "Enabled · helps prevent accidental activation" else "Disabled · tap to enable",
-            if (pocketEnabled) "●" else "○"
-        ) {
-            dialog.dismiss()
-            val newValue = !wakePrefs.getBoolean("pocket_protection_enabled", false)
-            wakePrefs.edit().putBoolean("pocket_protection_enabled", newValue).apply()
-            notifySnapServiceSettingsChanged()
-            Toast.makeText(
-                this,
-                if (newValue) "Pocket Protection enabled" else "Pocket Protection disabled",
-                Toast.LENGTH_SHORT
-            ).show()
-            handler.post { showCustomizeDialog() }
+        val pocketRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            background = rounded(Color.rgb(29, 29, 34), 17, Color.rgb(58, 58, 66), 1)
         }
+        val pocketText = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        pocketText.addView(label("Pocket Protection", 14f, Color.WHITE, true), full())
+        space(pocketText, 3)
+        val pocketStatus = label(
+            if (pocketEnabled) "ON · prevents accidental snaps" else "OFF · prevents accidental snaps",
+            11f, if (pocketEnabled) bright else muted
+        )
+        pocketText.addView(pocketStatus, full())
+        pocketRow.addView(pocketText, LinearLayout.LayoutParams(0, -2, 1f))
+        val pocketSwitch = android.widget.Switch(this).apply {
+            isChecked = pocketEnabled
+            showText = false
+            thumbTintList = android.content.res.ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                intArrayOf(Color.WHITE, Color.rgb(175, 175, 185))
+            )
+            trackTintList = android.content.res.ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                intArrayOf(accent, Color.rgb(75, 75, 84))
+            )
+            setOnCheckedChangeListener { _, checked ->
+                wakePrefs.edit().putBoolean("pocket_protection_enabled", checked).apply()
+                pocketStatus.text = if (checked) "ON · prevents accidental snaps" else "OFF · prevents accidental snaps"
+                pocketStatus.setTextColor(if (checked) bright else muted)
+                notifySnapServiceSettingsChanged()
+                Toast.makeText(
+                    this@MainActivity,
+                    if (checked) "Pocket Protection enabled" else "Pocket Protection disabled",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+        pocketRow.addView(pocketSwitch)
+        page.addView(pocketRow, full())
+        space(page, 8)
 
         space(page, 5)
         val restore = TextView(this).apply {
@@ -401,6 +426,12 @@ class MainActivity : Activity() {
             dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
             val width = minOf(resources.displayMetrics.widthPixels - dp(28), dp(420))
             dialog.window?.setLayout(width, minOf(dp(650), resources.displayMetrics.heightPixels - dp(70)))
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).apply {
+                text = "CLOSE"
+                setTextColor(Color.rgb(215, 215, 225))
+                background = rounded(Color.rgb(38, 38, 46), 22, Color.rgb(70, 70, 82), 1)
+                setPadding(dp(18), dp(7), dp(18), dp(7))
+            }
         }
         dialog.show()
     }
@@ -640,18 +671,16 @@ class MainActivity : Activity() {
                 }
             }
             val chip = TextView(this).apply {
-                background = GradientDrawable().apply {
-                    shape = GradientDrawable.OVAL
-                    setColor(color)
-                    setStroke(dp(1), Color.argb(150, 255, 255, 255))
-                }
+                background = rounded(color, 9, Color.argb(210, 255, 255, 255), 1)
+                elevation = dp(2).toFloat()
             }
-            item.addView(chip, LinearLayout.LayoutParams(dp(34), dp(34)))
-            space(item, 3)
-            item.addView(label(name, 9f, Color.LTGRAY, false, Gravity.CENTER), full())
+            item.addView(chip, LinearLayout.LayoutParams(dp(43), dp(25)))
+            space(item, 5)
+            item.addView(label(name, 10f, Color.WHITE, true, Gravity.CENTER), full())
+            item.addView(label(hex, 8f, Color.rgb(160, 160, 174), false, Gravity.CENTER), full())
             val params = android.widget.GridLayout.LayoutParams().apply {
                 width = 0
-                height = dp(67)
+                height = dp(78)
                 columnSpec = android.widget.GridLayout.spec(android.widget.GridLayout.UNDEFINED, 1f)
                 setMargins(dp(2), dp(1), dp(2), dp(1))
             }
@@ -696,6 +725,18 @@ class MainActivity : Activity() {
             dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
             val width = minOf(resources.displayMetrics.widthPixels - dp(28), dp(420))
             dialog.window?.setLayout(width, minOf(dp(690), resources.displayMetrics.heightPixels - dp(70)))
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).apply {
+                text = "APPLY COLOR"
+                setTextColor(Color.BLACK)
+                background = rounded(accent, 22, accent, 1)
+                setPadding(dp(18), dp(7), dp(18), dp(7))
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).apply {
+                text = "CANCEL"
+                setTextColor(Color.rgb(215, 215, 225))
+                background = rounded(Color.rgb(38, 38, 46), 22, Color.rgb(70, 70, 82), 1)
+                setPadding(dp(18), dp(7), dp(18), dp(7))
+            }
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val selected = selectedColor()
                 val editor = prefs.edit()
