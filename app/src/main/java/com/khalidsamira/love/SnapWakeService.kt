@@ -26,6 +26,12 @@ class SnapWakeService : Service() {
         const val ACTION_START = "com.khalidsamira.love.START_SNAP"
         const val ACTION_STOP = "com.khalidsamira.love.STOP_SNAP"
         const val ACTION_UPDATE_SETTINGS = "com.khalidsamira.love.UPDATE_SETTINGS"
+        const val ACTION_LEARN_SIGNATURE = "com.khalidsamira.love.LEARN_SIGNATURE"
+        private const val SIGNATURE_PREFS = "snap_signature"
+        private const val SIGNATURE_KEY = "template"
+        private const val SAMPLE_KEY = "samples"
+        private const val COUNT_KEY = "learn_count"
+        private const val REQUIRED_SAMPLES = 10
 
         @Volatile
         var isActive: Boolean = false
@@ -72,6 +78,12 @@ class SnapWakeService : Service() {
             }
 
             ACTION_START, null -> startListening()
+            ACTION_LEARN_SIGNATURE -> {
+                getSharedPreferences(SIGNATURE_PREFS, MODE_PRIVATE).edit()
+                    .putBoolean("learning", true).putInt(COUNT_KEY, 0)
+                    .remove(SAMPLE_KEY).remove(SIGNATURE_KEY).apply()
+                startListening()
+            }
 
             ACTION_UPDATE_SETTINGS -> updateProximityRegistration()
         }
@@ -367,7 +379,43 @@ class SnapWakeService : Service() {
                             "decay=${decayRatio.toString()}"
                     )
 
-                    handleSnap()
+                    val signaturePrefs = getSharedPreferences(SIGNATURE_PREFS, MODE_PRIVATE)
+                    val feature = createSnapFeature(samples)
+                    if (signaturePrefs.getBoolean("learning", false)) {
+                        val previous = signaturePrefs.getString(SAMPLE_KEY, "").orEmpty()
+                        val encoded = feature.joinToString(",")
+                        val count = signaturePrefs.getInt(COUNT_KEY, 0) + 1
+                        signaturePrefs.edit()
+                            .putString(SAMPLE_KEY, if (previous.isBlank()) encoded else previous + ";" + encoded)
+                            .putInt(COUNT_KEY, count)
+                            .apply()
+                        android.util.Log.i("SnapWakeService", "Learning snap $count/$REQUIRED_SAMPLES")
+                        if (count >= REQUIRED_SAMPLES) {
+                            val rows = signaturePrefs.getString(SAMPLE_KEY, "").orEmpty().split(";")
+                                .mapNotNull { row ->
+                                    val values = row.split(",").mapNotNull { it.toFloatOrNull() }
+                                    values.takeIf { it.size == 16 }
+                                }
+                            if (rows.size == REQUIRED_SAMPLES) {
+                                val average = FloatArray(16) { index ->
+                                    rows.map { it[index] }.average().toFloat()
+                                }
+                                signaturePrefs.edit()
+                                    .putString(SIGNATURE_KEY, average.joinToString(","))
+                                    .putBoolean("learning", false)
+                                    .remove(SAMPLE_KEY)
+                                    .apply()
+                                android.util.Log.i("SnapWakeService", "Personal snap profile saved")
+                            }
+                        }
+                    } else {
+                        val saved = signaturePrefs.getString(SIGNATURE_KEY, null)
+                        if (saved == null || isPersonalSnap(feature, saved)) {
+                            handleSnap()
+                        } else {
+                            android.util.Log.i("SnapWakeService", "Snap rejected by personal profile")
+                        }
+                    }
                 }
 
                 // Require a quiet interval before detecting another snap.
@@ -412,6 +460,36 @@ class SnapWakeService : Service() {
     }
 
 
+
+    // A lightweight local acoustic shape descriptor; not a guaranteed biometric.
+    private fun createSnapFeature(samples: ShortArray): FloatArray {
+        val bins = FloatArray(16)
+        for (i in samples.indices) {
+            val bin = (i * bins.size / samples.size).coerceIn(0, bins.lastIndex)
+            val value = samples[i].toFloat() / 32768f
+            bins[bin] += value * value
+        }
+        var norm = sqrt(bins.sumOf { (it * it).toDouble() }).toFloat()
+        if (norm < 0.000001f) norm = 1f
+        for (i in bins.indices) bins[i] /= norm
+        return bins
+    }
+
+    private fun isPersonalSnap(feature: FloatArray, encoded: String): Boolean {
+        val expected = encoded.split(",").mapNotNull { it.toFloatOrNull() }
+        if (expected.size != 16) return true
+        var dot = 0f
+        var left = 0f
+        var right = 0f
+        for (i in feature.indices) {
+            dot += feature[i] * expected[i]
+            left += feature[i] * feature[i]
+            right += expected[i] * expected[i]
+        }
+        val similarity = dot / (sqrt(left * right).coerceAtLeast(0.000001f))
+        android.util.Log.i("SnapWakeService", "Personal snap similarity=$similarity")
+        return similarity >= 0.90f
+    }
 
     private fun handleSnap() {
         val pocketProtection = getSharedPreferences("wake_settings", MODE_PRIVATE)
