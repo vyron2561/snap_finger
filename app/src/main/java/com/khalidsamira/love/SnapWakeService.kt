@@ -435,12 +435,8 @@ class SnapWakeService : Service() {
             return
         }
 
-        // Screen is on: lock only when the user has enabled Snap to Lock.
-        val enabled = getSharedPreferences("wake_settings", MODE_PRIVATE)
-            .getBoolean("snap_lock_enabled", false)
-
-        if (!enabled) return
-
+        // Screen is on: the next accepted snap locks the screen.
+        // Android requires the user to activate KOFAXA as a Device Admin first.
         val admin = android.content.ComponentName(
             this,
             SnapLockAdminReceiver::class.java
