@@ -451,8 +451,8 @@ class MainActivity : Activity() {
 
         val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(16), dp(20), dp(18))
-            setBackgroundColor(Color.rgb(16, 16, 20))
+            setPadding(dp(20), dp(20), dp(20), dp(22))
+            setBackgroundColor(Color.rgb(13, 13, 17))
         }
         val scroll = ScrollView(this).apply {
             isFillViewport = true
@@ -474,8 +474,8 @@ class MainActivity : Activity() {
             hint = "Enter HEX, e.g. #8B5CF6"
             inputType = android.text.InputType.TYPE_CLASS_TEXT or
                 android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
-            setPadding(dp(13), dp(10), dp(13), dp(10))
-            background = rounded(Color.rgb(31, 31, 37), 13, Color.rgb(76, 76, 86), 1)
+            setPadding(dp(15), dp(12), dp(15), dp(12))
+            background = rounded(Color.rgb(27, 27, 34), 15, Color.rgb(65, 65, 77), 1)
         }
 
         fun updatePreview(updateHex: Boolean = true) {
@@ -596,24 +596,24 @@ class MainActivity : Activity() {
             }
         }
 
-        page.addView(label("COLOR PREVIEW", 10f, muted, true), full())
+        page.addView(label("COLOR STUDIO", 19f, Color.WHITE, true), full())
         space(page, 7)
         page.addView(preview, LinearLayout.LayoutParams(-1, dp(50)))
         space(page, 12)
-        page.addView(label("CUSTOM COLOR · SATURATION & BRIGHTNESS", 10f, muted, true), full())
+        page.addView(label("FINE TUNE · SATURATION & BRIGHTNESS", 11f, Color.rgb(190, 190, 202), true), full())
         space(page, 7)
         saturationView.background = rounded(Color.DKGRAY, 16, Color.rgb(75, 75, 84), 1)
         saturationView.clipToOutline = true
-        page.addView(saturationView, LinearLayout.LayoutParams(-1, dp(205)))
+        page.addView(saturationView, LinearLayout.LayoutParams(-1, dp(175)))
         space(page, 9)
-        page.addView(label("HUE", 10f, muted, true), full())
+        page.addView(label("HUE", 11f, Color.rgb(190, 190, 202), true), full())
         page.addView(hueView, LinearLayout.LayoutParams(-1, dp(34)))
         space(page, 8)
-        page.addView(label("HEX COLOR", 10f, muted, true), full())
+        page.addView(label("HEX VALUE", 11f, Color.rgb(190, 190, 202), true), full())
         space(page, 6)
         page.addView(hexInput, LinearLayout.LayoutParams(-1, dp(46)))
         space(page, 15)
-        page.addView(label("NAMED COLORS", 10f, muted, true), full())
+        page.addView(label("CURATED PALETTE", 11f, Color.rgb(190, 190, 202), true), full())
         space(page, 7)
 
         val grid = android.widget.GridLayout(this).apply {
@@ -626,7 +626,8 @@ class MainActivity : Activity() {
             val item = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                setPadding(dp(2), dp(4), dp(2), dp(4))
+                setPadding(dp(4), dp(7), dp(4), dp(7))
+                background = rounded(Color.rgb(25, 25, 31), 13, Color.rgb(48, 48, 58), 1)
                 setOnClickListener {
                     Color.colorToHSV(color, hsv)
                     selectedHue = hsv[0]
@@ -645,12 +646,12 @@ class MainActivity : Activity() {
                     setStroke(dp(1), Color.argb(150, 255, 255, 255))
                 }
             }
-            item.addView(chip, LinearLayout.LayoutParams(dp(29), dp(29)))
+            item.addView(chip, LinearLayout.LayoutParams(dp(34), dp(34)))
             space(item, 3)
             item.addView(label(name, 9f, Color.LTGRAY, false, Gravity.CENTER), full())
             val params = android.widget.GridLayout.LayoutParams().apply {
                 width = 0
-                height = dp(57)
+                height = dp(67)
                 columnSpec = android.widget.GridLayout.spec(android.widget.GridLayout.UNDEFINED, 1f)
                 setMargins(dp(2), dp(1), dp(2), dp(1))
             }
