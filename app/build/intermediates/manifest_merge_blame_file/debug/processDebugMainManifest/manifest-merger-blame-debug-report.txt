@@ -1,0 +1,91 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.khalidsamira.love"
+4    android:versionCode="1"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="23"
+9        android:targetSdkVersion="35" />
+10
+11    <uses-permission android:name="android.permission.WAKE_LOCK" />
+11-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:3:5-68
+11-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:3:22-65
+12    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+12-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:4:5-71
+12-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:4:22-68
+13    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+13-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:5:5-77
+13-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:5:22-74
+14    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+14-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:6:5-88
+14-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:6:22-85
+15
+16    <application
+16-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:8:5-41:19
+17        android:allowBackup="true"
+17-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:9:9-35
+18        android:debuggable="true"
+19        android:extractNativeLibs="false"
+20        android:icon="@mipmap/ic_launcher"
+20-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:12:67-101
+21        android:label="KOFAXA"
+21-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:10:9-31
+22        android:roundIcon="@mipmap/ic_launcher_round"
+22-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:12:102-147
+23        android:supportsRtl="true"
+23-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:11:9-35
+24        android:theme="@android:style/Theme.Material.NoActionBar" >
+24-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:12:9-66
+25        <activity
+25-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:14:9-21:20
+26            android:name="com.khalidsamira.love.MainActivity"
+26-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:15:13-41
+27            android:exported="true" >
+27-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:16:13-36
+28            <intent-filter>
+28-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:17:13-20:29
+29                <action android:name="android.intent.action.MAIN" />
+29-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:18:17-69
+29-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:18:25-66
+30
+31                <category android:name="android.intent.category.LAUNCHER" />
+31-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:19:17-77
+31-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:19:27-74
+32            </intent-filter>
+33        </activity>
+34
+35        <service
+35-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:23:9-26:58
+36            android:name="com.khalidsamira.love.SnapWakeService"
+36-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:24:13-44
+37            android:exported="false"
+37-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:25:13-37
+38            android:foregroundServiceType="microphone" />
+38-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:26:13-55
+39
+40        <receiver
+40-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:29:9-39:20
+41            android:name="com.khalidsamira.love.SnapLockAdminReceiver"
+41-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:30:13-50
+42            android:exported="true"
+42-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:32:13-36
+43            android:permission="android.permission.BIND_DEVICE_ADMIN" >
+43-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:31:13-70
+44            <meta-data
+44-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:33:13-35:59
+45                android:name="android.app.device_admin"
+45-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:34:17-56
+46                android:resource="@xml/snap_lock_admin" />
+46-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:35:17-56
+47
+48            <intent-filter>
+48-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:36:13-38:29
+49                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+49-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:37:17-82
+49-->/home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/AndroidManifest.xml:37:25-79
+50            </intent-filter>
+51        </receiver>
+52    </application>
+53
+54</manifest>

@@ -1,0 +1,11 @@
+R_DEF: Internal format may change without notice
+local
+drawable kofaxa_background
+drawable kofaxa_logo
+mipmap ic_launcher
+mipmap ic_launcher_round
+string accessibility_description
+string app_name
+string kofaxa_snap_lock_admin_description
+xml snap_lock_admin
+xml volume_wake_accessibility

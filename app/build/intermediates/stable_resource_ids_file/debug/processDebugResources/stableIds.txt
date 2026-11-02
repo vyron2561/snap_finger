@@ -1,0 +1,9 @@
+com.khalidsamira.love:string/kofaxa_snap_lock_admin_description = 0x7f030002
+com.khalidsamira.love:string/app_name = 0x7f030001
+com.khalidsamira.love:drawable/kofaxa_background = 0x7f010000
+com.khalidsamira.love:string/accessibility_description = 0x7f030000
+com.khalidsamira.love:xml/volume_wake_accessibility = 0x7f040001
+com.khalidsamira.love:xml/snap_lock_admin = 0x7f040000
+com.khalidsamira.love:mipmap/ic_launcher_round = 0x7f020001
+com.khalidsamira.love:mipmap/ic_launcher = 0x7f020000
+com.khalidsamira.love:drawable/kofaxa_logo = 0x7f010001

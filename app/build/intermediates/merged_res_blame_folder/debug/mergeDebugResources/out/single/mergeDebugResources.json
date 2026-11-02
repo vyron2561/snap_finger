@@ -1,0 +1,58 @@
+[
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/xml_snap_lock_admin.xml.flat",
+        "source": "com.khalidsamira.love.app-main-6:/xml/snap_lock_admin.xml"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/drawable_kofaxa_background.xml.flat",
+        "source": "com.khalidsamira.love.app-main-6:/drawable/kofaxa_background.xml"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-xxxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/drawable_kofaxa_logo.png.flat",
+        "source": "com.khalidsamira.love.app-main-6:/drawable/kofaxa_logo.png"
+    },
+    {
+        "merged": "com.khalidsamira.love.app-debug-4:/xml_volume_wake_accessibility.xml.flat",
+        "source": "com.khalidsamira.love.app-main-6:/xml/volume_wake_accessibility.xml"
+    }
+]

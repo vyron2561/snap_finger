@@ -1,0 +1,7 @@
+com.khalidsamira.love.app-pngs-0 /home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/build/generated/res/pngs/release
+com.khalidsamira.love.app-resValues-1 /home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/build/generated/res/resValues/release
+com.khalidsamira.love.app-packageReleaseResources-2 /home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
+com.khalidsamira.love.app-packageReleaseResources-3 /home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
+com.khalidsamira.love.app-release-4 /home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/build/intermediates/merged_res/release/mergeReleaseResources
+com.khalidsamira.love.app-main-5 /home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/main/res
+com.khalidsamira.love.app-release-6 /home/youssef/Desktop/KhalidSamiraLove/KhalidSamiraLove/app/src/release/res
