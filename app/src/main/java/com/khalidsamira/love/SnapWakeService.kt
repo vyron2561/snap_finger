@@ -325,15 +325,15 @@ class SnapWakeService : Service() {
                 val now = System.currentTimeMillis()
 
                 val looksLikeSnap =
-                    peak >= 8500 &&
-                    rms >= maxOf(500.0, noiseFloor * 2.4) &&
-                    crest >= 4.5 &&
-                    lowRatio <= 0.58 &&
-                    concentration >= 0.13 &&
-                    activeChunks <= 2 &&
+                    peak >= 5000 &&
+                    rms >= maxOf(300.0, noiseFloor * 1.9) &&
+                    crest >= 3.0 &&
+                    lowRatio <= 0.78 &&
+                    concentration >= 0.08 &&
+                    activeChunks <= 4 &&
                     maxIndex <= 13 &&
-                    decayRatio <= 0.12 &&
-                    maxChunkRms >= otherAverage * 2.0
+                    decayRatio <= 0.38 &&
+                    maxChunkRms >= otherAverage * 1.7
 
                 // Temporary diagnostic logging for loud, short sounds.
                 if (peak >= 3000 && rms >= 250.0 &&
@@ -355,7 +355,7 @@ class SnapWakeService : Service() {
                     noiseFloor = noiseFloor * 0.94 + rms * 0.06
                 }
 
-                if (looksLikeSnap && armed && now - lastAccepted >= 850L) {
+                if (looksLikeSnap && armed && now - lastAccepted >= 550L) {
                     armed = false
                     lastAccepted = now
 
@@ -374,7 +374,7 @@ class SnapWakeService : Service() {
                 if (rms < maxOf(noiseFloor * 1.7, 500.0)) {
                     quietFrames++
 
-                    if (quietFrames >= 8) {
+                    if (quietFrames >= 4) {
                         armed = true
                     }
                 } else {
