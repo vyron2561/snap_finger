@@ -140,9 +140,14 @@ class MainActivity : Activity() {
                 setColor(Color.rgb(25, 20, 36))
                 setStroke(dp(3), accent)
             }
-            // Padding leaves a visible circular accent ring around the profile image.
-            setPadding(dp(5), dp(5), dp(5), dp(5))
+            // Clip the selected artwork itself to a true circle; keep the ring as a foreground.
+            setPadding(0, 0, 0, 0)
             clipToOutline = true
+            foreground = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.TRANSPARENT)
+                setStroke(dp(3), accent)
+            }
             elevation = dp(7).toFloat()
 
             val logoUri = prefs.getString(KEY_LOGO_URI, null)
@@ -245,8 +250,8 @@ class MainActivity : Activity() {
 
         val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(12), dp(18), dp(12))
-            setBackgroundColor(Color.rgb(12, 10, 18))
+            setPadding(dp(20), dp(18), dp(20), dp(18))
+            setBackgroundColor(Color.rgb(15, 15, 18))
         }
 
         val scroll = ScrollView(this).apply {
@@ -255,12 +260,12 @@ class MainActivity : Activity() {
             addView(page)
         }
 
-        val heading = label("MAKE KOFAXA YOURS", 19f, Color.WHITE, true)
+        val heading = label("PERSONALIZE KOFAXA", 20f, Color.WHITE, true)
         heading.letterSpacing = 0.06f
         page.addView(heading, full())
         space(page, 4)
         page.addView(
-            label("Personalize the colors, images and smart controls.", 12f, muted, false),
+            label("A cleaner look, your colors, and smarter snap controls.", 12f, Color.rgb(170, 170, 178), false),
             full()
         )
         space(page, 18)
@@ -280,9 +285,9 @@ class MainActivity : Activity() {
                 gravity = Gravity.CENTER_VERTICAL
                 setPadding(dp(13), dp(11), dp(13), dp(11))
                 background = rounded(
-                    Color.rgb(27, 23, 37),
-                    15,
-                    Color.rgb(58, 49, 76),
+                    Color.rgb(29, 29, 34),
+                    17,
+                    Color.rgb(58, 58, 66),
                     1
                 )
                 isClickable = true
@@ -295,7 +300,7 @@ class MainActivity : Activity() {
                 gravity = Gravity.CENTER
                 textSize = 21f
                 setTextColor(accent)
-                background = rounded(Color.rgb(45, 35, 65), 12, Color.TRANSPARENT, 0)
+                background = rounded(Color.rgb(43, 43, 50), 13, Color.TRANSPARENT, 0)
             }
             row.addView(icon, LinearLayout.LayoutParams(dp(43), dp(43)))
             row.addView(View(this), LinearLayout.LayoutParams(dp(12), 1))
@@ -446,8 +451,8 @@ class MainActivity : Activity() {
 
         val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(10), dp(18), dp(12))
-            setBackgroundColor(Color.rgb(13, 11, 19))
+            setPadding(dp(20), dp(16), dp(20), dp(18))
+            setBackgroundColor(Color.rgb(16, 16, 20))
         }
         val scroll = ScrollView(this).apply {
             isFillViewport = true
@@ -470,7 +475,7 @@ class MainActivity : Activity() {
             inputType = android.text.InputType.TYPE_CLASS_TEXT or
                 android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
             setPadding(dp(13), dp(10), dp(13), dp(10))
-            background = rounded(Color.rgb(30, 26, 39), 12, Color.rgb(68, 58, 86), 1)
+            background = rounded(Color.rgb(31, 31, 37), 13, Color.rgb(76, 76, 86), 1)
         }
 
         fun updatePreview(updateHex: Boolean = true) {
@@ -597,7 +602,9 @@ class MainActivity : Activity() {
         space(page, 12)
         page.addView(label("CUSTOM COLOR · SATURATION & BRIGHTNESS", 10f, muted, true), full())
         space(page, 7)
-        page.addView(saturationView, LinearLayout.LayoutParams(-1, dp(185)))
+        saturationView.background = rounded(Color.DKGRAY, 16, Color.rgb(75, 75, 84), 1)
+        saturationView.clipToOutline = true
+        page.addView(saturationView, LinearLayout.LayoutParams(-1, dp(205)))
         space(page, 9)
         page.addView(label("HUE", 10f, muted, true), full())
         page.addView(hueView, LinearLayout.LayoutParams(-1, dp(34)))
