@@ -13,7 +13,9 @@ import android.widget.TextView
 import java.util.Locale
 class VoiceAssistantActivity : Activity(), TextToSpeech.OnInitListener {
  private val surfaceColor = 0xFF1B1D22.toInt()
- private val primaryText = 0xFFF1F1F1.toInt()\n private val secondaryText = 0xFFA1A1AA.toInt()\n private var recognizer: SpeechRecognizer? = null
+ private val primaryText = 0xFFF1F1F1.toInt()
+ private val secondaryText = 0xFFA1A1AA.toInt()
+ private var recognizer: SpeechRecognizer? = null
  private var tts: TextToSpeech? = null
  private var ttsReady = false
  private lateinit var status: TextView
