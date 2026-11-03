@@ -68,6 +68,19 @@ class MainActivity : Activity() {
         refreshState()
         scheduleUpdateChecks()
         requestNotificationPermissionIfNeeded()
+        if (intent.getBooleanExtra("open_update", false)) {
+            intent.removeExtra("open_update")
+            UpdateInstaller.downloadAndInstall(this)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra("open_update", false)) {
+            intent.removeExtra("open_update")
+            UpdateInstaller.downloadAndInstall(this)
+        }
     }
 
     private fun scheduleUpdateChecks() {
