@@ -2,6 +2,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -11,7 +12,9 @@
         android:allowBackup="true"
         android:label="KOFAXA"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.NoActionBar" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round">
+        android:theme="@android:style/Theme.Material.NoActionBar"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
 
         <activity
             android:name=".VoiceAssistantActivity"
@@ -19,7 +22,8 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -31,7 +35,6 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
-    
         <receiver
             android:name=".SnapLockAdminReceiver"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
@@ -43,6 +46,16 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 </manifest>
