@@ -369,6 +369,16 @@ class MainActivity : Activity() {
             startSnapLearning()
         }
 
+        addSection("Voice assistant")
+        addAction(
+            "Talk to KOFAXA",
+            "Speak Moroccan Darija to open apps and control navigation",
+            "🎙"
+        ) {
+            dialog.dismiss()
+            startActivity(Intent(this, VoiceAssistantActivity::class.java))
+        }
+
         addSection("Smart controls")
         val pocketRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
