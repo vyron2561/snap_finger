@@ -366,7 +366,6 @@ class MainActivity : Activity() {
                 val isPocket = wakePrefs.getBoolean("pocket_protection_enabled", false)
                 item("Pocket Protection", if (isPocket) "Enabled · prevents accidental snaps" else "Disabled · prevents accidental snaps", "⌑") {
                     wakePrefs.edit().putBoolean("pocket_protection_enabled", !isPocket).apply()
-                    notifySnapServiceSettingsChanged()
                     renderCustomizePage(null)
                 }
                 space(content, 10)
