@@ -149,7 +149,7 @@ class MainActivity : Activity() {
         val imageOverlay = View(this).apply {
             val hasPhoto = prefs.getString(KEY_BACKGROUND_URI, null) != null
             setBackgroundColor(Color.BLACK)
-            alpha = if (hasPhoto) 0.42f else 0f
+            alpha = if (hasPhoto) 0.58f else 0.82f
         }
         screen.addView(imageOverlay, FrameLayout.LayoutParams(-1, -1))
 
@@ -430,7 +430,7 @@ class MainActivity : Activity() {
         window.statusBarColor = bg
         window.navigationBarColor = bg
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
+            window.decorView.systemUiVisibility = 0
         }
     }
 
@@ -964,9 +964,9 @@ class MainActivity : Activity() {
         background = GradientDrawable(
             GradientDrawable.Orientation.TL_BR,
             intArrayOf(
-                mix(accent, Color.rgb(20, 16, 31), 0.68f),
-                Color.rgb(19, 15, 29),
-                mix(accent, Color.rgb(19, 15, 29), 0.78f)
+                Color.rgb(31, 32, 37),
+                Color.rgb(22, 23, 27),
+                Color.rgb(27, 29, 34)
             )
         ).apply {
             cornerRadius = dp(20).toFloat()
