@@ -12,7 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import java.util.Locale
 class VoiceAssistantActivity : Activity(), TextToSpeech.OnInitListener {
- private var recognizer: SpeechRecognizer? = null
+ private val surfaceColor = 0xFF1B1D22.toInt()\n private val primaryText = 0xFFF1F1F1.toInt()\n private val secondaryText = 0xFFA1A1AA.toInt()\n private var recognizer: SpeechRecognizer? = null
  private var tts: TextToSpeech? = null
  private var ttsReady = false
  private lateinit var status: TextView
@@ -21,13 +21,13 @@ class VoiceAssistantActivity : Activity(), TextToSpeech.OnInitListener {
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
   tts = TextToSpeech(this, this)
-  val root = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER; setPadding(28,36,28,28); setBackgroundColor(0xFF09090D.toInt()) }
-  root.addView(TextView(this).apply { text="KOFAXA VOICE"; textSize=25f; gravity=Gravity.CENTER; setTextColor(-1) }, LinearLayout.LayoutParams(-1,0,1f))
-  status = TextView(this).apply { text="اضغط وتكلم بالدارجة المغربية"; textSize=18f; gravity=Gravity.CENTER; setTextColor(0xFFD6C7FF.toInt()) }
+  val root = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER; setPadding(28,36,28,28); setBackgroundColor(0xFF101114.toInt()) }
+  root.addView(TextView(this).apply { text="KOFAXA VOICE"; textSize=25f; gravity=Gravity.CENTER; setTextColor(0xFFF1F1F1.toInt()) }, LinearLayout.LayoutParams(-1,0,1f))
+  status = TextView(this).apply { text="اضغط وتكلم بالدارجة المغربية"; textSize=18f; gravity=Gravity.CENTER; setTextColor(0xFFA1A1AA.toInt()) }
   result = TextView(this).apply { text="مثال: حلّ إنستا"; textSize=18f; gravity=Gravity.CENTER; setTextColor(-1) }
   listen = Button(this).apply { text="🎙 تكلم مع KOFAXA"; isAllCaps=false; setOnClickListener { listenNow() } }
-  root.addView(status,LinearLayout.LayoutParams(-1,0,1f)); root.addView(result,LinearLayout.LayoutParams(-1,0,2f)); root.addView(listen,LinearLayout.LayoutParams(-1,58))
-  root.addView(Button(this).apply { text="رجوع"; setOnClickListener { finish() } },LinearLayout.LayoutParams(-1,52))
+  root.addView(status,LinearLayout.LayoutParams(-1,0,1f)); root.addView(result,LinearLayout.LayoutParams(-1,0,2f)); listen.setTextColor(0xFF101114.toInt()); listen.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFFB9A7D9.toInt()); root.addView(listen,LinearLayout.LayoutParams(-1,58))
+  root.addView(Button(this).apply { text="رجوع"; setTextColor(primaryText); backgroundTintList = android.content.res.ColorStateList.valueOf(surfaceColor); setOnClickListener { finish() } },LinearLayout.LayoutParams(-1,52))
   setContentView(root)
   if (SpeechRecognizer.isRecognitionAvailable(this)) {
    recognizer=SpeechRecognizer.createSpeechRecognizer(this)
