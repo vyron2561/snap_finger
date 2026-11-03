@@ -16,8 +16,8 @@ android {
         applicationId = "com.khalidsamira.love"
         minSdk = 23
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = providers.gradleProperty("appVersionCode").orElse("1").get().toInt()
+        versionName = providers.gradleProperty("appVersionName").orElse("1.0.0").get()
     }
 
     compileOptions {
