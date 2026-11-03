@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build and publish KOFAXA APK
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -33,13 +33,73 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK
-        run: gradle assembleDebug --stacktrace
+      - name: Calculate release version
+        id: version
+        shell: bash
+        run: |
+          echo "code=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_OUTPUT"
+          echo "name=1.0.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
 
-      - name: Upload APK
+      - name: Build APK
+        run: |
+          gradle assembleDebug --stacktrace \
+            -PappVersionCode=${{ steps.version.outputs.code }} \
+            -PappVersionName=${{ steps.version.outputs.name }}
+
+      - name: Calculate APK checksum
+        id: checksum
+        shell: bash
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          echo "sha256=$(sha256sum "$APK" | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KOFAXA-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: KOFAXA-${{ steps.version.outputs.name }}
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish APK to private Supabase Storage
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          APK_SHA256: ${{ steps.checksum.outputs.sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${SUPABASE_URL:?Missing SUPABASE_URL repository secret}"
+          : "${SUPABASE_SECRET_KEY:?Missing SUPABASE_SECRET_KEY repository secret}"
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          OBJECT_PATH="kofaxa-${VERSION_NAME}.apk"
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --url "${SUPABASE_URL}/storage/v1/object/kofaxa-apks/${OBJECT_PATH}" \
+            --header "apikey: ${SUPABASE_SECRET_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+            --header "Content-Type: application/vnd.android.package-archive" \
+            --header "x-upsert: true" \
+            --data-binary "@${APK}"
+
+          jq -n \
+            --argjson version_code "${VERSION_CODE}" \
+            --arg version_name "${VERSION_NAME}" \
+            --arg apk_path "${OBJECT_PATH}" \
+            --arg sha256 "${APK_SHA256}" \
+            --arg release_notes "Automatic KOFAXA build ${VERSION_NAME}" \
+            '[{version_code:$version_code,version_name:$version_name,apk_path:$apk_path,sha256:$sha256,release_notes:$release_notes}]' \
+            > release.json
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --url "${SUPABASE_URL}/rest/v1/kofaxa_app_releases" \
+            --header "apikey: ${SUPABASE_SECRET_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+            --header "Content-Type: application/json" \
+            --header "Prefer: resolution=merge-duplicates,return=minimal" \
+            --data-binary "@release.json"
