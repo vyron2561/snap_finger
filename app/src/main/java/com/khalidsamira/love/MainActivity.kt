@@ -23,6 +23,11 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 class MainActivity : Activity() {
     private lateinit var statusText: TextView
@@ -61,6 +66,27 @@ class MainActivity : Activity() {
         enabled = SnapWakeService.isActive
         buildScreen()
         refreshState()
+        scheduleUpdateChecks()
+        requestNotificationPermissionIfNeeded()
+    }
+
+    private fun scheduleUpdateChecks() {
+        val workManager = WorkManager.getInstance(this)
+        val periodic = PeriodicWorkRequestBuilder<UpdateCheckWorker>(12, TimeUnit.HOURS).build()
+        workManager.enqueueUniquePeriodicWork(
+            "kofaxa_periodic_update_check",
+            ExistingPeriodicWorkPolicy.KEEP,
+            periodic
+        )
+        workManager.enqueue(OneTimeWorkRequestBuilder<UpdateCheckWorker>().build())
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1002)
+        }
     }
 
     private val updater = object : Runnable {
@@ -941,6 +967,7 @@ class MainActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1002) return
         if (requestCode == 1001) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 enableSnapWake()
