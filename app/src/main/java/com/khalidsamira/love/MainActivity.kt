@@ -53,11 +53,11 @@ class MainActivity : Activity() {
         private const val REQUEST_BACKGROUND = 3101
         private const val REQUEST_LOGO = 3102
 
-        private val DEFAULT_ACCENT = Color.rgb(167, 139, 250)
-        private val DEFAULT_BRIGHT = Color.rgb(196, 181, 253)
-        private val DEFAULT_MUTED = Color.rgb(166, 157, 184)
-        private val DEFAULT_BORDER = Color.rgb(73, 52, 111)
-        private val DEFAULT_BACKGROUND = Color.rgb(8, 7, 13)
+        private val DEFAULT_ACCENT = Color.rgb(185, 167, 217)
+        private val DEFAULT_BRIGHT = Color.rgb(225, 218, 238)
+        private val DEFAULT_MUTED = Color.rgb(161, 161, 170)
+        private val DEFAULT_BORDER = Color.rgb(54, 56, 64)
+        private val DEFAULT_BACKGROUND = Color.rgb(16, 17, 20)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -116,7 +116,7 @@ class MainActivity : Activity() {
     private fun loadAppearance() {
         accent = prefs.getInt(KEY_ACCENT, DEFAULT_ACCENT)
         bright = mix(accent, Color.WHITE, 0.24f)
-        muted = Color.rgb(166, 157, 184)
+        muted = DEFAULT_MUTED
         border = mix(accent, Color.BLACK, 0.58f)
     }
 
@@ -274,7 +274,7 @@ class MainActivity : Activity() {
         val barColor = if (prefs.contains(KEY_BACKGROUND_COLOR)) {
             darken(prefs.getInt(KEY_BACKGROUND_COLOR, DEFAULT_BACKGROUND), 0.48f)
         } else {
-            Color.rgb(8, 7, 13)
+            Color.rgb(16, 17, 20)
         }
         window.statusBarColor = barColor
         window.navigationBarColor = barColor
@@ -284,215 +284,154 @@ class MainActivity : Activity() {
     }
 
     private fun showCustomizeDialog() {
+        renderCustomizePage(null)
+    }
+
+    private fun renderCustomizePage(section: String?) {
         val wakePrefs = getSharedPreferences("wake_settings", MODE_PRIVATE)
-        val pocketEnabled = wakePrefs.getBoolean("pocket_protection_enabled", false)
+        val bg = Color.rgb(16, 17, 20)
+        val surface = Color.rgb(27, 29, 34)
+        val stroke = Color.rgb(54, 56, 64)
+        val textPrimary = Color.rgb(241, 241, 241)
+        val textSecondary = Color.rgb(161, 161, 170)
 
-        val page = LinearLayout(this).apply {
+        val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(18), dp(20), dp(18))
-            setBackgroundColor(Color.rgb(15, 15, 18))
+            setPadding(dp(20), dp(16), dp(20), dp(20))
+            setBackgroundColor(bg)
         }
-
-        val scroll = ScrollView(this).apply {
-            isFillViewport = true
-            clipToPadding = false
-            addView(page)
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
         }
-
-        val heading = label("PERSONALIZE KOFAXA", 20f, Color.WHITE, true)
-        heading.letterSpacing = 0.06f
-        page.addView(heading, full())
-        space(page, 4)
-        page.addView(
-            label("A cleaner look, your colors, and smarter snap controls.", 12f, Color.rgb(170, 170, 178), false),
-            full()
-        )
-        space(page, 18)
-
-        fun addSection(text: String) {
-            val section = label(text.uppercase(), 10f, accent, true)
-            section.letterSpacing = 0.14f
-            page.addView(section, full())
-            space(page, 8)
+        val back = TextView(this).apply {
+            text = "‹"
+            textSize = 34f
+            gravity = Gravity.CENTER
+            setTextColor(textPrimary)
+            setOnClickListener { if (section == null) buildScreen() else renderCustomizePage(null) }
         }
+        header.addView(back, LinearLayout.LayoutParams(dp(42), dp(48)))
+        val heading = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        heading.addView(label(if (section == null) "Customize" else section, 23f, textPrimary, true), full())
+        heading.addView(label(if (section == null) "Make KOFAXA feel like yours" else "Personalize this setting", 12f, textSecondary), full())
+        header.addView(heading, LinearLayout.LayoutParams(0, -2, 1f))
+        root.addView(header, full())
+        space(root, 22)
 
-        lateinit var dialog: AlertDialog
+        val scroll = ScrollView(this).apply { isFillViewport = true; overScrollMode = View.OVER_SCROLL_NEVER }
+        val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        scroll.addView(content)
+        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
-        fun addAction(title: String, detail: String, symbol: String, onClick: () -> Unit) {
+        fun sectionTitle(value: String) {
+            val t = label(value.uppercase(), 10f, bright, true)
+            t.letterSpacing = 0.15f
+            content.addView(t, full())
+            space(content, 9)
+        }
+        fun item(title: String, detail: String, icon: String, action: () -> Unit) {
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(13), dp(11), dp(13), dp(11))
-                background = rounded(
-                    Color.rgb(29, 29, 34),
-                    17,
-                    Color.rgb(58, 58, 66),
-                    1
-                )
+                setPadding(dp(14), dp(13), dp(12), dp(13))
+                background = rounded(surface, 18, stroke, 1)
                 isClickable = true
                 isFocusable = true
-                setOnClickListener { onClick() }
+                setOnClickListener { action() }
             }
+            val symbol = label(icon, 21f, bright, true, Gravity.CENTER)
+            symbol.background = rounded(Color.rgb(39, 40, 47), 13, Color.TRANSPARENT, 0)
+            row.addView(symbol, LinearLayout.LayoutParams(dp(44), dp(44)))
+            val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), 0, 0, 0) }
+            column.addView(label(title, 15f, textPrimary, true), full())
+            space(column, 3)
+            column.addView(label(detail, 11f, textSecondary), full())
+            row.addView(column, LinearLayout.LayoutParams(0, -2, 1f))
+            row.addView(label("›", 24f, textSecondary, false, Gravity.CENTER))
+            content.addView(row, full())
+            space(content, 9)
+        }
 
-            val icon = TextView(this).apply {
-                text = symbol
-                gravity = Gravity.CENTER
-                textSize = 21f
-                setTextColor(accent)
-                background = rounded(Color.rgb(43, 43, 50), 13, Color.TRANSPARENT, 0)
+        when (section) {
+            null -> {
+                sectionTitle("Appearance")
+                item("Accent color", "Choose a subtle highlight color", "◉") { renderCustomizePage("Accent color") }
+                item("Background", "Choose a calm dark background or photo", "▧") { renderCustomizePage("Background") }
+                sectionTitle("Personalization")
+                item("Profile logo", "Change your KOFAXA profile image", "◎") { renderCustomizePage("Profile logo") }
+                sectionTitle("Snap experience")
+                item("Snap recognition", "Train KOFAXA to recognize your snap", "✦") { renderCustomizePage("Snap recognition") }
+                item("Voice assistant", "Speak to KOFAXA in Moroccan Darija", "🎙") { renderCustomizePage("Voice assistant") }
+                val isPocket = wakePrefs.getBoolean("pocket_protection_enabled", false)
+                item("Pocket Protection", if (isPocket) "Enabled · prevents accidental snaps" else "Disabled · prevents accidental snaps", "⌑") {
+                    wakePrefs.edit().putBoolean("pocket_protection_enabled", !isPocket).apply()
+                    notifySnapServiceSettingsChanged()
+                    renderCustomizePage(null)
+                }
+                space(content, 10)
+                val restore = Button(this).apply {
+                    text = "Restore default appearance"
+                    isAllCaps = false
+                    setTextColor(textPrimary)
+                    background = rounded(surface, 18, stroke, 1)
+                    setOnClickListener { restoreDefaultAppearance(); renderCustomizePage(null) }
+                }
+                content.addView(restore, LinearLayout.LayoutParams(-1, dp(50)))
             }
-            row.addView(icon, LinearLayout.LayoutParams(dp(43), dp(43)))
-            row.addView(View(this), LinearLayout.LayoutParams(dp(12), 1))
-
-            val textColumn = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
+            "Accent color" -> {
+                sectionTitle("Choose your accent")
+                item("Soft lavender", "Balanced highlight · recommended", "●") {
+                    prefs.edit().putInt(KEY_ACCENT, Color.rgb(185, 167, 217)).apply(); rebuildAppearance(); renderCustomizePage("Accent color")
+                }
+                item("Warm silver", "Neutral and understated", "●") {
+                    prefs.edit().putInt(KEY_ACCENT, Color.rgb(190, 190, 198)).apply(); rebuildAppearance(); renderCustomizePage("Accent color")
+                }
+                item("Pure white", "Minimal monochrome", "●") {
+                    prefs.edit().putInt(KEY_ACCENT, Color.rgb(241, 241, 241)).apply(); rebuildAppearance(); renderCustomizePage("Accent color")
+                }
+                item("Custom color studio", "Fine tune any HEX color", "＋") { showColorPicker("Accent color", KEY_ACCENT, prefs.getInt(KEY_ACCENT, DEFAULT_ACCENT)) }
             }
-            textColumn.addView(label(title, 14f, Color.WHITE, true), full())
-            space(textColumn, 3)
-            textColumn.addView(label(detail, 11f, muted, false), full())
-            row.addView(textColumn, LinearLayout.LayoutParams(0, -2, 1f))
-
-            val arrow = label("›", 25f, muted, false, Gravity.CENTER)
-            row.addView(arrow, LinearLayout.LayoutParams(dp(24), dp(40)))
-            page.addView(row, full())
-            space(page, 8)
-        }
-
-        addSection("Appearance")
-        addAction(
-            "Accent color",
-            "Choose any color for buttons and highlights",
-            "◉"
-        ) {
-            dialog.dismiss()
-            showColorPicker("Accent color", KEY_ACCENT, prefs.getInt(KEY_ACCENT, DEFAULT_ACCENT))
-        }
-        addAction(
-            "Background color",
-            "Set a custom solid background color",
-            "▧"
-        ) {
-            dialog.dismiss()
-            showColorPicker(
-                "Background color",
-                KEY_BACKGROUND_COLOR,
-                prefs.getInt(KEY_BACKGROUND_COLOR, DEFAULT_BACKGROUND)
-            )
-        }
-
-        addSection("Images")
-        addAction(
-            "Background photo",
-            "Choose an image from your gallery",
-            "▣"
-        ) {
-            dialog.dismiss()
-            openImagePicker(REQUEST_BACKGROUND)
-        }
-        addAction(
-            "Profile logo",
-            "Choose the circular KOFAXA profile picture",
-            "◎"
-        ) {
-            dialog.dismiss()
-            openImagePicker(REQUEST_LOGO)
-        }
-
-        addSection("Personal snap recognition")
-        addAction(
-            "Learn my snap",
-            "KOFAXA records and analyzes 10 of your snaps",
-            "✦"
-        ) {
-            dialog.dismiss()
-            startSnapLearning()
-        }
-
-        addSection("Voice assistant")
-        addAction(
-            "Talk to KOFAXA",
-            "Speak Moroccan Darija to open apps and control navigation",
-            "🎙"
-        ) {
-            dialog.dismiss()
-            startActivity(Intent(this, VoiceAssistantActivity::class.java))
-        }
-
-        addSection("Smart controls")
-        val pocketRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(14), dp(12), dp(14), dp(12))
-            background = rounded(Color.rgb(29, 29, 34), 17, Color.rgb(58, 58, 66), 1)
-        }
-        val pocketText = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        pocketText.addView(label("Pocket Protection", 14f, Color.WHITE, true), full())
-        space(pocketText, 3)
-        val pocketStatus = label(
-            if (pocketEnabled) "ON · prevents accidental snaps" else "OFF · prevents accidental snaps",
-            11f, if (pocketEnabled) bright else muted
-        )
-        pocketText.addView(pocketStatus, full())
-        pocketRow.addView(pocketText, LinearLayout.LayoutParams(0, -2, 1f))
-        val pocketSwitch = android.widget.Switch(this).apply {
-            isChecked = pocketEnabled
-            showText = false
-            thumbTintList = android.content.res.ColorStateList(
-                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                intArrayOf(Color.WHITE, Color.rgb(175, 175, 185))
-            )
-            trackTintList = android.content.res.ColorStateList(
-                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                intArrayOf(accent, Color.rgb(75, 75, 84))
-            )
-            setOnCheckedChangeListener { _, checked ->
-                wakePrefs.edit().putBoolean("pocket_protection_enabled", checked).apply()
-                pocketStatus.text = if (checked) "ON · prevents accidental snaps" else "OFF · prevents accidental snaps"
-                pocketStatus.setTextColor(if (checked) bright else muted)
-                notifySnapServiceSettingsChanged()
-                Toast.makeText(
-                    this@MainActivity,
-                    if (checked) "Pocket Protection enabled" else "Pocket Protection disabled",
-                    Toast.LENGTH_SHORT
-                ).show()
+            "Background" -> {
+                sectionTitle("Dark backgrounds")
+                item("Dark charcoal", "Default · #101114", "●") {
+                    prefs.edit().remove(KEY_BACKGROUND_URI).putInt(KEY_BACKGROUND_COLOR, Color.rgb(16,17,20)).apply(); rebuildAppearance(); renderCustomizePage("Background")
+                }
+                item("Deep graphite", "A little darker · #0D0E11", "●") {
+                    prefs.edit().remove(KEY_BACKGROUND_URI).putInt(KEY_BACKGROUND_COLOR, Color.rgb(13,14,17)).apply(); rebuildAppearance(); renderCustomizePage("Background")
+                }
+                item("Choose a background photo", "Use an image from your gallery", "▣") { openImagePicker(REQUEST_BACKGROUND) }
+                item("Custom background color", "Open the color studio", "＋") { showColorPicker("Background color", KEY_BACKGROUND_COLOR, prefs.getInt(KEY_BACKGROUND_COLOR, DEFAULT_BACKGROUND)) }
+            }
+            "Profile logo" -> {
+                sectionTitle("Profile image")
+                item("Choose from gallery", "Select a square or portrait image", "◎") { openImagePicker(REQUEST_LOGO) }
+                item("Restore KOFAXA logo", "Use the original app logo", "↺") {
+                    prefs.edit().remove(KEY_LOGO_URI).apply(); rebuildAppearance(); renderCustomizePage("Profile logo")
+                }
+            }
+            "Snap recognition" -> {
+                sectionTitle("Personal snap profile")
+                item("Learn my snap", "Analyze ten clear snaps to create your local profile", "✦") { startSnapLearning() }
+                item("Reset snap profile", "Remove the saved sound profile and learn again", "↺") {
+                    getSharedPreferences("snap_signature", MODE_PRIVATE).edit().remove("template").remove("samples").putBoolean("learning", false).putInt("learn_count", 0).apply()
+                    Toast.makeText(this, "Snap profile reset", Toast.LENGTH_SHORT).show()
+                }
+            }
+            "Voice assistant" -> {
+                sectionTitle("Voice assistant")
+                item("Open KOFAXA Voice", "Use voice commands in Moroccan Darija", "🎙") {
+                    startActivity(Intent(this, VoiceAssistantActivity::class.java))
+                }
             }
         }
-        pocketRow.addView(pocketSwitch)
-        page.addView(pocketRow, full())
-        space(page, 8)
 
-        space(page, 5)
-        val restore = TextView(this).apply {
-            text = "Restore default appearance"
-            gravity = Gravity.CENTER
-            textSize = 12f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(muted)
-            setPadding(dp(12), dp(13), dp(12), dp(13))
-            background = rounded(Color.rgb(22, 19, 29), 13, Color.rgb(52, 45, 65), 1)
-            setOnClickListener {
-                dialog.dismiss()
-                restoreDefaultAppearance()
-            }
+        setContentView(root)
+        window.statusBarColor = bg
+        window.navigationBarColor = bg
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
         }
-        page.addView(restore, full())
-
-        dialog = AlertDialog.Builder(this)
-            .setView(scroll)
-            .setNegativeButton("Done", null)
-            .create()
-        dialog.setOnShowListener {
-            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-            val width = minOf(resources.displayMetrics.widthPixels - dp(28), dp(420))
-            dialog.window?.setLayout(width, minOf(dp(650), resources.displayMetrics.heightPixels - dp(70)))
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).apply {
-                text = "CLOSE"
-                setTextColor(Color.rgb(215, 215, 225))
-                background = rounded(Color.rgb(38, 38, 46), 22, Color.rgb(70, 70, 82), 1)
-                setPadding(dp(18), dp(7), dp(18), dp(7))
-            }
-        }
-        dialog.show()
     }
 
     private fun startSnapLearning() {
