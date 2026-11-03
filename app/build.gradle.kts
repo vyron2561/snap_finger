@@ -20,6 +20,25 @@ android {
         versionName = providers.gradleProperty("appVersionName").orElse("1.0.0").get()
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = System.getenv("KOFAXA_KEYSTORE_FILE")
+            if (!storeFilePath.isNullOrBlank()) {
+                storeFile = file(storeFilePath)
+                storePassword = System.getenv("KOFAXA_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KOFAXA_KEY_ALIAS")
+                keyPassword = System.getenv("KOFAXA_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
