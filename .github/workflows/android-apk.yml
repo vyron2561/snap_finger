@@ -33,6 +33,18 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Restore stable release signing key
+        env:
+          KOFAXA_KEYSTORE_BASE64: ${{ secrets.KOFAXA_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${KOFAXA_KEYSTORE_BASE64:?Missing KOFAXA_KEYSTORE_BASE64 repository secret}"
+          mkdir -p "$RUNNER_TEMP/kofaxa-signing"
+          printf '%s' "$KOFAXA_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/kofaxa-signing/release.jks"
+          test -s "$RUNNER_TEMP/kofaxa-signing/release.jks"
+          echo "KOFAXA_KEYSTORE_FILE=$RUNNER_TEMP/kofaxa-signing/release.jks" >> "$GITHUB_ENV"
+
       - name: Calculate release version
         id: version
         shell: bash
@@ -40,9 +52,13 @@ jobs:
           echo "code=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_OUTPUT"
           echo "name=1.0.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
 
-      - name: Build APK
+      - name: Build signed release APK
+        env:
+          KOFAXA_KEYSTORE_PASSWORD: ${{ secrets.KOFAXA_KEYSTORE_PASSWORD }}
+          KOFAXA_KEY_ALIAS: ${{ secrets.KOFAXA_KEY_ALIAS }}
+          KOFAXA_KEY_PASSWORD: ${{ secrets.KOFAXA_KEY_PASSWORD }}
         run: |
-          gradle assembleDebug --stacktrace \
+          gradle assembleRelease --stacktrace \
             -PappVersionCode=${{ steps.version.outputs.code }} \
             -PappVersionName=${{ steps.version.outputs.name }}
 
@@ -50,7 +66,7 @@ jobs:
         id: checksum
         shell: bash
         run: |
-          APK="app/build/outputs/apk/debug/app-debug.apk"
+          APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           echo "sha256=$(sha256sum "$APK" | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
 
@@ -58,7 +74,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: KOFAXA-${{ steps.version.outputs.name }}
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -74,7 +90,7 @@ jobs:
           set -euo pipefail
           : "${SUPABASE_URL:?Missing SUPABASE_URL repository secret}"
           : "${SUPABASE_SECRET_KEY:?Missing SUPABASE_SECRET_KEY repository secret}"
-          APK="app/build/outputs/apk/debug/app-debug.apk"
+          APK="app/build/outputs/apk/release/app-release.apk"
           OBJECT_PATH="kofaxa-${VERSION_NAME}.apk"
 
           curl --fail-with-body --silent --show-error \
