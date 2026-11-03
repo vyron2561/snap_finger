@@ -488,7 +488,10 @@ class SnapWakeService : Service() {
         }
         val similarity = dot / (sqrt(left * right).coerceAtLeast(0.000001f))
         android.util.Log.i("SnapWakeService", "Personal snap similarity=$similarity")
-        return similarity >= 0.90f
+        // This compact acoustic descriptor varies between genuine snaps from one user.
+        // The initial snap-shape detector already filters candidates, so avoid rejecting
+        // the user's own snaps with an overly strict personal-profile threshold.
+        return similarity >= 0.78f
     }
 
     private fun handleSnap() {
@@ -547,6 +550,7 @@ class SnapWakeService : Service() {
             getSystemService(Context.POWER_SERVICE) as PowerManager
 
         if (!power.isInteractive) {
+            android.util.Log.i("SnapWakeService", "Accepted personal snap: waking display")
             val lock = power.newWakeLock(
                 PowerManager.SCREEN_BRIGHT_WAKE_LOCK or
                     PowerManager.ACQUIRE_CAUSES_WAKEUP or
@@ -555,8 +559,10 @@ class SnapWakeService : Service() {
             )
 
             try {
-                lock.acquire(3000)
-            } catch (_: Exception) {
+                lock.acquire(5000)
+                android.util.Log.i("SnapWakeService", "Wake lock acquired")
+            } catch (e: Exception) {
+                android.util.Log.e("SnapWakeService", "Could not wake display", e)
             }
         }
     }
