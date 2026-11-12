@@ -12,8 +12,8 @@
         android:label="KOFAXA"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.NoActionBar"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round">
+        android:icon="@drawable/kofaxa_icon"
+        android:roundIcon="@drawable/kofaxa_icon">
 
         <activity
             android:name=".MainActivity"

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">KHALID + SAMIRA = LOVE</string>
+    <string name="app_name">KOFAXA</string>
     <string name="accessibility_description">يسمح للتطبيق بالتقاط ضغطات أزرار الصوت عندما تكون الشاشة مطفأة لإيقاظها. لا يغيّر وظيفة الأزرار عندما تكون الشاشة مضاءة.</string>
     <string name="kofaxa_snap_lock_admin_description">Allows KOFAXA to lock the screen when a finger snap is detected.</string>
     <string name="volume_wake_description">Wake your phone by pressing the volume up button while the screen is off. Requires Accessibility permission.</string>
