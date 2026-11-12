@@ -14,8 +14,8 @@
         android:label="KOFAXA"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.NoActionBar"
-        android:icon="@drawable/royal_purple_k_crest"
-        android:roundIcon="@drawable/royal_purple_k_crest">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher">
 
         <activity
             android:name=".SplashActivity"
