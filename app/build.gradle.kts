@@ -11,7 +11,14 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }
 
+val prepareKofaxaIcon by tasks.registering(Copy::class) {
+    from(rootProject.file("Crowned K Winged Royal Emblem.png"))
+    into(layout.buildDirectory.dir("generated/kofaxa/res/drawable-nodpi"))
+    rename { "kofaxa_icon.png" }
+}
+
 android {
+    sourceSets.getByName("main").res.srcDir(layout.buildDirectory.dir("generated/kofaxa/res"))
     namespace = "com.khalidsamira.love"
     compileSdk = 35
 
@@ -51,3 +58,5 @@ android {
         jvmTarget = "17"
     }
 }
+
+tasks.named("preBuild").configure { dependsOn(prepareKofaxaIcon) }

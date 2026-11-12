@@ -48,11 +48,13 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         buildScreen()
+        AppUpdater.checkForUpdates(this, manual = false)
     }
 
     override fun onResume() {
         super.onResume()
         if (::actionButton.isInitialized) refreshState()
+        AppUpdater.installPendingUpdate(this)
     }
 
     private fun buildScreen() {
@@ -224,6 +226,21 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             letterSpacing = 0.20f
         }, LinearLayout.LayoutParams(-1, -2))
+
+
+        root.addView(Button(this).apply {
+            text = "Check for updates"
+            textSize = 13f
+            isAllCaps = false
+            setTextColor(COLOR_PURPLE_LIGHT)
+            background = GradientDrawable().apply {
+                cornerRadius = dp(22).toFloat()
+                setColor(Color.argb(28, 167, 139, 250))
+                setStroke(dp(1), COLOR_BORDER)
+            }
+            stateListAnimator = null
+            setOnClickListener { AppUpdater.checkForUpdates(this@MainActivity, manual = true) }
+        }, LinearLayout.LayoutParams(-1, dp(46)).apply { topMargin = dp(14) })
 
         window.statusBarColor = COLOR_BG
         window.navigationBarColor = COLOR_BG
