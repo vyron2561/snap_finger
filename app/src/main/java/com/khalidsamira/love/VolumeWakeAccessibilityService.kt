@@ -32,32 +32,22 @@ class VolumeWakeAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
-
     override fun onInterrupt() = Unit
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
-        if (event.action != KeyEvent.ACTION_DOWN || event.repeatCount > 0) {
-            return false
-        }
-
-        if (event.keyCode != KeyEvent.KEYCODE_VOLUME_UP) {
-            return false
-        }
-
-        val enabled = prefs.getBoolean(KEY_ENABLED, false)
-        if (!enabled) return false
+        if (event.action != KeyEvent.ACTION_DOWN || event.repeatCount > 0) return false
+        if (event.keyCode != KeyEvent.KEYCODE_VOLUME_UP) return false
+        if (!prefs.getBoolean(KEY_ENABLED, false)) return false
 
         val power = getSystemService(Context.POWER_SERVICE) as PowerManager
         if (power.isInteractive) return false
 
         try {
-            screenController.handleSnap()
+            screenController.wakeScreen()
             android.util.Log.i(TAG, "WAKE_BY_VOLUME_UP")
         } catch (e: Exception) {
             android.util.Log.e(TAG, "WAKE_FAILED", e)
         }
-
-        // Consume the event so the volume doesn't change.
         return true
     }
 
