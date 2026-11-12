@@ -14,8 +14,8 @@
         android:label="KOFAXA"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.NoActionBar"
-        android:icon="@drawable/kofaxa_icon"
-        android:roundIcon="@drawable/kofaxa_icon">
+        android:icon="@drawable/royal_purple_k_crest"
+        android:roundIcon="@drawable/royal_purple_k_crest">
 
         <activity
             android:name=".SplashActivity"
