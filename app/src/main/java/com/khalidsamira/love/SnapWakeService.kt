@@ -182,6 +182,17 @@ class SnapWakeService : Service() {
                 if (filled < samples.size) continue
 
                 val analysis = analyzer.analyze(samples)
+
+                if (analysis.peak >= 3000) {
+                    android.util.Log.i(
+                        "SnapWakeService",
+                        "SPECTRAL zcr=${analysis.spectral.zeroCrossingRate} " +
+                            "centroid=${analysis.spectral.spectralCentroid} " +
+                            "highRatio=${analysis.spectral.highFreqRatio} " +
+                            "clapLike=${analysis.isClapLike}"
+                    )
+                }
+
                 val now = System.currentTimeMillis()
 
                 if (analysis.peak >= 3000 && analysis.rms >= 250.0 &&

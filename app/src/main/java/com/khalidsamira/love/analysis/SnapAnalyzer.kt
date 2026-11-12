@@ -83,6 +83,13 @@ class SnapAnalyzer {
         }
         val decayRatio = decayRms / maxOf(maxChunkRms, 1.0)
 
+        val spectral = SpectralFeatureExtractor.extract(samples)
+
+        val isClapLike =
+            spectral.zeroCrossingRate > 0.45 &&
+                spectral.highFreqRatio > 0.35 &&
+                spectral.spectralCentroid > 4000.0
+
         val looksLikeSnap =
             peak >= PEAK_THRESHOLD &&
                 rms >= maxOf(RMS_ABS_MIN, noiseFloor * RMS_NOISE_MULT) &&
@@ -92,7 +99,8 @@ class SnapAnalyzer {
                 activeChunks <= ACTIVE_CHUNKS_MAX &&
                 maxIndex <= MAX_INDEX_LIMIT &&
                 decayRatio <= DECAY_RATIO_MAX &&
-                maxChunkRms >= otherAverage * OTHER_RATIO_MIN
+                maxChunkRms >= otherAverage * OTHER_RATIO_MIN &&
+                !isClapLike
 
         // Noise floor adaptation (same as original detectSnaps)
         if (rms < maxOf(noiseFloor * 1.8, 700.0)) {
@@ -110,7 +118,9 @@ class SnapAnalyzer {
             otherAverage = otherAverage,
             decayRatio = decayRatio,
             maxIndex = maxIndex,
-            looksLikeSnap = looksLikeSnap
+            looksLikeSnap = looksLikeSnap,
+            isClapLike = isClapLike,
+            spectral = spectral
         )
     }
 }
