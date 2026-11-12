@@ -3,23 +3,19 @@ package com.khalidsamira.love
 
 import com.khalidsamira.love.analysis.SnapAnalyzer
 import com.khalidsamira.love.analysis.SnapSignatureManager
+import com.khalidsamira.love.sensor.ProximityMonitor
+import com.khalidsamira.love.screen.ScreenController
 
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.IBinder
-import android.os.PowerManager
 import kotlin.concurrent.thread
 
 class SnapWakeService : Service() {
@@ -47,27 +43,13 @@ class SnapWakeService : Service() {
     @Volatile private var running = false
     @Volatile private var recorder: AudioRecord? = null
 
-    @Volatile private var proximityNear = false
-    @Volatile private var proximityHasReading = false
-    @Volatile private var proximityAvailable = false
-    private var proximityRegistered = false
-    private var proximitySensorManager: SensorManager? = null
-
-    private val proximityListener = object : SensorEventListener {
-        override fun onSensorChanged(event: SensorEvent) {
-            if (event.sensor.type != Sensor.TYPE_PROXIMITY ||
-                event.values.isEmpty()
-            ) return
-
-            proximityNear = event.values[0] < event.sensor.maximumRange
-            proximityHasReading = true
-        }
-
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-    }
+    private lateinit var proximityMonitor: ProximityMonitor
+    private lateinit var screenController: ScreenController
 
     override fun onCreate() {
         super.onCreate()
+        proximityMonitor = ProximityMonitor(this)
+        screenController = ScreenController(this)
         createNotificationChannel()
         startForegroundCompat()
     }
@@ -87,7 +69,7 @@ class SnapWakeService : Service() {
                 startListening()
             }
 
-            ACTION_UPDATE_SETTINGS -> updateProximityRegistration()
+            ACTION_UPDATE_SETTINGS -> proximityMonitor.refresh()
         }
 
         return START_NOT_STICKY
@@ -117,66 +99,6 @@ class SnapWakeService : Service() {
 
             getSystemService(NotificationManager::class.java)
                 .createNotificationChannel(channel)
-        }
-    }
-
-    private fun updateProximityRegistration() {
-        val enabled = getSharedPreferences("wake_settings", MODE_PRIVATE)
-            .getBoolean("pocket_protection_enabled", false)
-
-        val manager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-
-        if (!enabled) {
-            if (proximityRegistered) {
-                manager.unregisterListener(proximityListener)
-            }
-            proximityRegistered = false
-            proximityAvailable = false
-            proximityHasReading = false
-            proximityNear = false
-            proximitySensorManager = null
-            android.util.Log.i("SnapWakeService", "Pocket Protection OFF")
-            return
-        }
-
-        if (proximityRegistered) return
-
-        val sensor = manager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
-        if (sensor == null) {
-            proximityAvailable = false
-            proximityHasReading = false
-            android.util.Log.w(
-                "SnapWakeService",
-                "Pocket Protection unavailable: no proximity sensor"
-            )
-            return
-        }
-
-        proximitySensorManager = manager
-        proximityAvailable = true
-        proximityHasReading = false
-
-        // Conservatively block snaps until the sensor reports its first value.
-        proximityNear = true
-
-        proximityRegistered = manager.registerListener(
-            proximityListener,
-            sensor,
-            SensorManager.SENSOR_DELAY_NORMAL
-        )
-
-        if (!proximityRegistered) {
-            proximityAvailable = false
-            proximityNear = false
-            android.util.Log.e(
-                "SnapWakeService",
-                "Could not register proximity sensor"
-            )
-        } else {
-            android.util.Log.i(
-                "SnapWakeService",
-                "Pocket Protection ON; maxRange=${sensor.maximumRange}"
-            )
         }
     }
 
@@ -226,7 +148,7 @@ class SnapWakeService : Service() {
             .putBoolean("snap_enabled", true)
             .apply()
 
-        updateProximityRegistration()
+        proximityMonitor.refresh()
 
         thread(name = "SnapAudioDetector") {
             detectSnaps(audio)
@@ -346,9 +268,7 @@ class SnapWakeService : Service() {
         val pocketProtection = getSharedPreferences("wake_settings", MODE_PRIVATE)
             .getBoolean("pocket_protection_enabled", false)
 
-        if (pocketProtection && proximityAvailable &&
-            (!proximityHasReading || proximityNear)
-        ) {
+        if (pocketProtection && proximityMonitor.isBlocking()) {
             android.util.Log.i(
                 "SnapWakeService",
                 "Snap ignored: proximity sensor is covered"
@@ -356,71 +276,14 @@ class SnapWakeService : Service() {
             return
         }
 
-        val power = getSystemService(Context.POWER_SERVICE) as PowerManager
-
-        // Screen is off: wake it.
-        if (!power.isInteractive) {
-            wakeScreen()
-            return
-        }
-
-        // Screen is on: the next accepted snap locks the screen.
-        // Android requires the user to activate KOFAXA as a Device Admin first.
-        val admin = android.content.ComponentName(
-            this,
-            SnapLockAdminReceiver::class.java
-        )
-        val policy = getSystemService(Context.DEVICE_POLICY_SERVICE)
-            as android.app.admin.DevicePolicyManager
-
-        if (!policy.isAdminActive(admin)) {
-            android.util.Log.w(
-                "SnapWakeService",
-                "Snap to Lock is enabled but Device Admin is not active."
-            )
-            return
-        }
-
-        try {
-            policy.lockNow()
-        } catch (e: Exception) {
-            android.util.Log.e(
-                "SnapWakeService",
-                "Could not lock screen",
-                e
-            )
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    private fun wakeScreen() {
-        val power =
-            getSystemService(Context.POWER_SERVICE) as PowerManager
-
-        if (!power.isInteractive) {
-            val lock = power.newWakeLock(
-                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or
-                    PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                    PowerManager.ON_AFTER_RELEASE,
-                "KhalidSamiraLove:SnapWake"
-            )
-
-            try {
-                lock.acquire(3000)
-            } catch (_: Exception) {
-            }
-        }
+        screenController.handleSnap()
     }
 
     override fun onDestroy() {
         running = false
         isActive = false
 
-        proximitySensorManager?.unregisterListener(proximityListener)
-        proximityRegistered = false
-        proximityAvailable = false
-        proximityHasReading = false
-        proximityNear = false
+        proximityMonitor.disable()
 
         try {
             recorder?.stop()
