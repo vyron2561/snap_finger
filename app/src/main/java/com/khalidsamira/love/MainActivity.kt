@@ -4,6 +4,8 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.ComponentName
+import android.provider.Settings as AndroidSettings
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
@@ -455,6 +457,93 @@ class MainActivity : Activity() {
         }
         pocketRow.addView(pocketSwitch)
         page.addView(pocketRow, full())
+        space(page, 8)
+
+        addSection("Wake with volume button")
+        val volumeEnabled = wakePrefs.getBoolean("volume_wake_enabled", false)
+        val serviceActive = isVolumeWakeServiceEnabled()
+        val volumeRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            background = rounded(Color.rgb(29, 29, 34), 17, Color.rgb(58, 58, 66), 1)
+        }
+        val volumeText = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        volumeText.addView(
+            label("Volume Up Wake", 14f, Color.WHITE, true),
+            full()
+        )
+        space(volumeText, 3)
+        val volumeStatus = label(
+            when {
+                !volumeEnabled -> "OFF · wake with volume up button"
+                !serviceActive -> "ON · Accessibility service not enabled"
+                else -> "ON · ready"
+            },
+            11f,
+            when {
+                !volumeEnabled -> muted
+                !serviceActive -> Color.rgb(251, 191, 36)
+                else -> bright
+            }
+        )
+        volumeText.addView(volumeStatus, full())
+        volumeRow.addView(volumeText, LinearLayout.LayoutParams(0, -2, 1f))
+        val volumeSwitch = android.widget.Switch(this).apply {
+            isChecked = volumeEnabled
+            showText = false
+            thumbTintList = android.content.res.ColorStateList(
+                arrayOf(
+                    intArrayOf(android.R.attr.state_checked),
+                    intArrayOf()
+                ),
+                intArrayOf(Color.WHITE, Color.rgb(175, 175, 185))
+            )
+            trackTintList = android.content.res.ColorStateList(
+                arrayOf(
+                    intArrayOf(android.R.attr.state_checked),
+                    intArrayOf()
+                ),
+                intArrayOf(accent, Color.rgb(75, 75, 84))
+            )
+            setOnCheckedChangeListener { _, checked ->
+                if (checked) {
+                    wakePrefs.edit().putBoolean("volume_wake_enabled", true).apply()
+                    if (!isVolumeWakeServiceEnabled()) {
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("Enable Accessibility Service")
+                            .setMessage(
+                                "To wake your phone with the volume up button, " +
+                                    "KOFAXA needs the Accessibility permission.\n\n" +
+                                    "Tap 'Open Settings', find 'KOFAXA Volume Wake', " +
+                                    "and enable it."
+                            )
+                            .setCancelable(false)
+                            .setNegativeButton("Cancel") { _, _ ->
+                                volumeSwitch.isChecked = false
+                                wakePrefs.edit()
+                                    .putBoolean("volume_wake_enabled", false).apply()
+                            }
+                            .setPositiveButton("Open Settings") { _, _ ->
+                                openAccessibilitySettings()
+                            }
+                            .show()
+                    } else {
+                        volumeStatus.text = "ON · ready"
+                        volumeStatus.setTextColor(bright)
+                    }
+                } else {
+                    wakePrefs.edit()
+                        .putBoolean("volume_wake_enabled", false).apply()
+                    volumeStatus.text = "OFF · wake with volume up button"
+                    volumeStatus.setTextColor(muted)
+                }
+            }
+        }
+        volumeRow.addView(volumeSwitch)
+        page.addView(volumeRow, full())
         space(page, 8)
 
         space(page, 5)
@@ -983,6 +1072,37 @@ class MainActivity : Activity() {
             } else {
                 Toast.makeText(this, "Audio access is needed for snap detection.", Toast.LENGTH_LONG).show()
             }
+        }
+    }
+
+    private fun isVolumeWakeServiceEnabled(): Boolean {
+        val enabled = AndroidSettings.Secure.getString(
+            contentResolver,
+            AndroidSettings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+        val expected = ComponentName(
+            this,
+            VolumeWakeAccessibilityService::class.java
+        ).flattenToString()
+        return enabled.split(":").any { it.equals(expected, ignoreCase = true) }
+    }
+
+    private fun openAccessibilitySettings() {
+        try {
+            val intent = Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+            Toast.makeText(
+                this,
+                "Find 'KOFAXA Volume Wake' in the list and enable it",
+                Toast.LENGTH_LONG
+            ).show()
+        } catch (e: Exception) {
+            Toast.makeText(
+                this,
+                "Could not open Accessibility Settings: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
