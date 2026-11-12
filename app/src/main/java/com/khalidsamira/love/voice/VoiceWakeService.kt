@@ -187,7 +187,7 @@ class VoiceWakeService : Service() {
             val text = JSONObject(jsonText).optString("text").lowercase()
             if (text.isBlank() || now - previousWake < 5000L) return null
             val selected = (prefs.getString(VoiceWakeConfig.KEY_KEYWORD, "kofaxa") ?: "kofaxa").lowercase()
-            val matched = text.contains(selected) || text.contains("kofaxa") ||
+            val matched = text.contains(selected) || text.contains("kofasha") || text.contains("kofaxa") ||
                 text.contains("wake up") || text.contains("computer")
             if (!matched) return null
             Log.i(TAG, "Wake phrase detected: $text")
