@@ -21,3 +21,46 @@
 
 ## قيود مهمة
 هذا نموذج أولي. نظام Android وبعض الشركات قد لا يمرر ضغطات أزرار الصوت إلى AccessibilityService أثناء إطفاء الشاشة، وقد تمنع سياسات الطاقة إيقاظ الشاشة. لذلك لا يمكن ضمان التوافق على كل الأجهزة. كما أن targetSdk=28 اختيار مؤقت لتقليل تعقيد قيود الخلفية في النموذج الأولي، ويجب مراجعته قبل النشر على Google Play.
+
+
+## بنية المشروع
+
+```text
+app/
+├── src/
+│   ├── main/
+│   │   ├── java/com/khalidsamira/love/
+│   │   │   ├── MainActivity.kt
+│   │   │   ├── VoiceAssistantActivity.kt
+│   │   │   ├── SnapWakeService.kt
+│   │   │   ├── SnapLockAdminReceiver.kt
+│   │   │   ├── UpdateCheckWorker.kt
+│   │   │   ├── UpdateInstaller.kt
+│   │   │   ├── analysis/
+│   │   │   │   ├── SnapAnalysis.kt
+│   │   │   │   ├── SnapAnalyzer.kt
+│   │   │   │   └── SnapSignatureManager.kt
+│   │   │   ├── sensor/
+│   │   │   │   └── ProximityMonitor.kt
+│   │   │   └── screen/
+│   │   │       └── ScreenController.kt
+│   │   ├── res/
+│   │   │   ├── drawable/
+│   │   │   ├── values/
+│   │   │   └── xml/
+│   │   └── AndroidManifest.xml
+│   └── test/java/com/khalidsamira/love/
+│       └── analysis/
+│           └── SnapAnalyzerTest.kt
+└── build.gradle.kts
+```
+
+### مسؤوليات الوحدات
+
+- `SnapWakeService`: خدمة الاستماع إلى صوت فرقعة الأصابع وإدارة دورة عملها.
+- `analysis/`: تحليل إشارة الصوت وإدارة بصمة الفرقعة.
+- `sensor/ProximityMonitor`: مراقبة مستشعر القرب وتطبيق حماية الجيب.
+- `screen/ScreenController`: تنفيذ إيقاظ الشاشة أو قفلها.
+- `SnapLockAdminReceiver`: استقبال صلاحية مسؤول الجهاز اللازمة لقفل الشاشة.
+- `res/`: موارد التطبيق، مثل النصوص والرسومات وملفات إعدادات XML.
+- `src/test/`: اختبارات الوحدات.
