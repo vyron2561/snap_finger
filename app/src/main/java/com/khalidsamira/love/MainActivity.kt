@@ -14,9 +14,14 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
+import android.text.InputFilter
+import android.text.InputType
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
@@ -267,6 +272,7 @@ class MainActivity : Activity() {
     private var voiceActionButton: Button? = null
     private var voiceStartButton: Button? = null
     private var voiceEndButton: Button? = null
+    private var voiceKeywordButton: Button? = null
 
     private fun addVoiceCard(root: LinearLayout) {
         val card = LinearLayout(this).apply {
@@ -303,6 +309,16 @@ class MainActivity : Activity() {
             setOnClickListener { onVoiceActionClicked() }
         }
         card.addView(voiceActionButton, LinearLayout.LayoutParams(-1, dp(46)))
+        space(card, 8)
+        voiceKeywordButton = Button(this).apply {
+            textSize = 12f
+            isAllCaps = false
+            setTextColor(COLOR_PURPLE_LIGHT)
+            background = voiceButtonBackground()
+            stateListAnimator = null
+            setOnClickListener { editWakeKeyword() }
+        }
+        card.addView(voiceKeywordButton, LinearLayout.LayoutParams(-1, dp(42)))
         space(card, 8)
         val scheduleRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -366,11 +382,15 @@ class MainActivity : Activity() {
         val manager = VoskModelManager(this)
         val ready = manager.isModelReady()
         val active = VoiceWakeService.isActive
+        val keyword = getSharedPreferences(VoiceWakeConfig.PREFS, MODE_PRIVATE)
+            .getString(VoiceWakeConfig.KEY_KEYWORD, VoiceWakeConfig.DEFAULT_KEYWORD)
+            ?: VoiceWakeConfig.DEFAULT_KEYWORD
         status.text = when {
             !ready -> "Voice model not downloaded · about 40 MB"
-            active -> "Listening for: KOFAXA · WAKE UP · COMPUTER"
-            else -> "Model ready · tap Enable to start listening"
+            active -> "Listening only for: $keyword"
+            else -> "Model ready · wake phrase: $keyword"
         }
+        voiceKeywordButton?.text = "Change wake phrase · $keyword"
         status.setTextColor(if (active) COLOR_GREEN_LIGHT else COLOR_MUTED)
         button.text = when {
             !ready -> "Download voice model"
@@ -380,6 +400,43 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences(VoiceWakeConfig.PREFS, MODE_PRIVATE)
         voiceStartButton?.text = "Start: %02d:00".format(prefs.getInt(VoiceWakeConfig.KEY_START_HOUR, 0))
         voiceEndButton?.text = "End: %02d:00".format(prefs.getInt(VoiceWakeConfig.KEY_END_HOUR, 0))
+    }
+
+    private fun editWakeKeyword() {
+        val prefs = getSharedPreferences(VoiceWakeConfig.PREFS, MODE_PRIVATE)
+        val current = prefs.getString(VoiceWakeConfig.KEY_KEYWORD, VoiceWakeConfig.DEFAULT_KEYWORD)
+            ?: VoiceWakeConfig.DEFAULT_KEYWORD
+        val input = EditText(this).apply {
+            setText(current)
+            hint = "wake up"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            filters = arrayOf(InputFilter.LengthFilter(40))
+            setSingleLine(true)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Wake phrase")
+            .setMessage("Choose the English words KOFAXA should recognize. Other speech and background sounds will not trigger it.")
+            .setView(input)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Save") { _, _ ->
+                val keyword = VoiceWakeConfig.normalizeKeyword(input.text.toString())
+                if (keyword.isBlank()) {
+                    Toast.makeText(this, "Wake phrase cannot be empty", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                prefs.edit().putString(VoiceWakeConfig.KEY_KEYWORD, keyword).apply()
+                refreshVoiceCard()
+                if (VoiceWakeService.isActive) {
+                    stopService(Intent(this, VoiceWakeService::class.java).setAction(VoiceWakeService.ACTION_STOP))
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        if (!isFinishing) startVoiceService()
+                    }, 800L)
+                    Toast.makeText(this, "Wake phrase saved · restarting listener", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Wake phrase saved", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .show()
     }
 
     private fun chooseVoiceHour(start: Boolean) {
