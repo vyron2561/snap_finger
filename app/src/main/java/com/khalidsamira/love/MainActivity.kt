@@ -508,7 +508,7 @@ class MainActivity : Activity() {
                 ),
                 intArrayOf(accent, Color.rgb(75, 75, 84))
             )
-            setOnCheckedChangeListener { _, checked ->
+            setOnCheckedChangeListener { sw, checked ->
                 if (checked) {
                     wakePrefs.edit().putBoolean("volume_wake_enabled", true).apply()
                     if (!isVolumeWakeServiceEnabled()) {
@@ -522,7 +522,7 @@ class MainActivity : Activity() {
                             )
                             .setCancelable(false)
                             .setNegativeButton("Cancel") { _, _ ->
-                                volumeSwitch.isChecked = false
+                                sw.isChecked = false
                                 wakePrefs.edit()
                                     .putBoolean("volume_wake_enabled", false).apply()
                             }
