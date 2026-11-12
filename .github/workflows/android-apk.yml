@@ -13,7 +13,7 @@ on:
       - '.github/workflows/android-apk.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-publish:
@@ -28,22 +28,24 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Gradle 8.9
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Restore stable release signing key
+      - name: Restore signing key
         env:
           KOFAXA_KEYSTORE_BASE64: ${{ secrets.KOFAXA_KEYSTORE_BASE64 }}
         shell: bash
         run: |
           set -euo pipefail
-          : "${KOFAXA_KEYSTORE_BASE64:?Missing KOFAXA_KEYSTORE_BASE64 repository secret}"
+          : "${KOFAXA_KEYSTORE_BASE64:?Missing KOFAXA_KEYSTORE_BASE64 secret}"
           mkdir -p "$RUNNER_TEMP/kofaxa-signing"
-          printf '%s' "$KOFAXA_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/kofaxa-signing/release.jks"
+          printf '%s' "$KOFAXA_KEYSTORE_BASE64" | base64 --decode \
+            > "$RUNNER_TEMP/kofaxa-signing/release.jks"
           test -s "$RUNNER_TEMP/kofaxa-signing/release.jks"
-          echo "KOFAXA_KEYSTORE_FILE=$RUNNER_TEMP/kofaxa-signing/release.jks" >> "$GITHUB_ENV"
+          echo "KOFAXA_KEYSTORE_FILE=$RUNNER_TEMP/kofaxa-signing/release.jks" \
+            >> "$GITHUB_ENV"
 
       - name: Calculate release version
         id: version
@@ -70,52 +72,34 @@ jobs:
           test -s "$APK"
           echo "sha256=$(sha256sum "$APK" | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
 
-      - name: Upload APK artifact
+      - name: Rename APK for release
+        shell: bash
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk \
+             "kofaxa-${{ steps.version.outputs.name }}.apk"
+
+      - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: KOFAXA-${{ steps.version.outputs.name }}
-          path: app/build/outputs/apk/release/app-release.apk
+          path: kofaxa-${{ steps.version.outputs.name }}.apk
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish APK to private Supabase Storage
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.name }}
+          name: KOFAXA ${{ steps.version.outputs.name }}
+          body: |
+            Automated KOFAXA release.
+
+            - Version: ${{ steps.version.outputs.name }}
+            - Version code: ${{ steps.version.outputs.code }}
+            - SHA256: `${{ steps.checksum.outputs.sha256 }}`
+          files: kofaxa-${{ steps.version.outputs.name }}.apk
+          draft: false
+          prerelease: false
+          make_latest: true
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          VERSION_CODE: ${{ steps.version.outputs.code }}
-          VERSION_NAME: ${{ steps.version.outputs.name }}
-          APK_SHA256: ${{ steps.checksum.outputs.sha256 }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          : "${SUPABASE_URL:?Missing SUPABASE_URL repository secret}"
-          : "${SUPABASE_SECRET_KEY:?Missing SUPABASE_SECRET_KEY repository secret}"
-          APK="app/build/outputs/apk/release/app-release.apk"
-          OBJECT_PATH="kofaxa-${VERSION_NAME}.apk"
-
-          curl --fail-with-body --silent --show-error \
-            --request POST \
-            --url "${SUPABASE_URL}/storage/v1/object/kofaxa-apks/${OBJECT_PATH}" \
-            --header "apikey: ${SUPABASE_SECRET_KEY}" \
-            --header "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
-            --header "Content-Type: application/vnd.android.package-archive" \
-            --header "x-upsert: true" \
-            --data-binary "@${APK}"
-
-          jq -n \
-            --argjson version_code "${VERSION_CODE}" \
-            --arg version_name "${VERSION_NAME}" \
-            --arg apk_path "${OBJECT_PATH}" \
-            --arg sha256 "${APK_SHA256}" \
-            --arg release_notes "Automatic KOFAXA build ${VERSION_NAME}" \
-            '[{version_code:$version_code,version_name:$version_name,apk_path:$apk_path,sha256:$sha256,release_notes:$release_notes}]' \
-            > release.json
-
-          curl --fail-with-body --silent --show-error \
-            --request POST \
-            --url "${SUPABASE_URL}/rest/v1/kofaxa_app_releases" \
-            --header "apikey: ${SUPABASE_SECRET_KEY}" \
-            --header "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
-            --header "Content-Type: application/json" \
-            --header "Prefer: resolution=merge-duplicates,return=minimal" \
-            --data-binary "@release.json"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
