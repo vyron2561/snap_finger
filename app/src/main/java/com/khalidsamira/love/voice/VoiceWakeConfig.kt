@@ -15,7 +15,7 @@ object VoiceWakeConfig {
     const val MODEL_URL = "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip"
     const val MODEL_DIR_NAME = "vosk-model-small-en-us-0.15"
     const val SAMPLE_RATE = 16000
-    const val CHUNK_SIZE = 4000
+    const val CHUNK_SIZE = 1600
     const val VAD_BASE_THRESHOLD = 500.0
     const val VAD_NOISE_FACTOR = 2.5
     const val NOTIFICATION_ID = 913
