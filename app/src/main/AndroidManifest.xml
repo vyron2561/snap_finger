@@ -18,23 +18,24 @@
         android:roundIcon="@drawable/kofaxa_icon">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true"
-            android:launchMode="singleTop">
+            android:screenOrientation="unspecified">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
 
         <service
             android:name=".voice.VoiceWakeService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
-
-
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -45,6 +46,5 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
     </application>
 </manifest>

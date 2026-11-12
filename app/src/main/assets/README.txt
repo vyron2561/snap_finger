@@ -1,0 +1,1 @@
+Place the original royal_jk_purple_wings.gif file in this directory. It is intentionally not re-encoded or redesigned.
