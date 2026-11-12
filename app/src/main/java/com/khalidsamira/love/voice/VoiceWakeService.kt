@@ -74,10 +74,17 @@ class VoiceWakeService : Service() {
 
     private fun initializeAndListen() {
         try {
-            val modelDir = VoskModelManager(this).modelDir()
-            if (!VoskModelManager(this).isModelReady()) error("Vosk model is not ready")
+            val manager = VoskModelManager(this)
+            val modelDir = manager.modelDir()
+            if (!manager.isModelReady()) error("Vosk model is not ready")
             model = Model(modelDir.absolutePath)
-            recognizer = Recognizer(model, VoiceWakeConfig.SAMPLE_RATE.toFloat(), VoiceWakeConfig.GRAMMAR_JSON)
+            val keyword = prefs.getString(VoiceWakeConfig.KEY_KEYWORD, VoiceWakeConfig.DEFAULT_KEYWORD)
+                ?: VoiceWakeConfig.DEFAULT_KEYWORD
+            recognizer = Recognizer(
+                model,
+                VoiceWakeConfig.SAMPLE_RATE.toFloat(),
+                VoiceWakeConfig.grammarJson(keyword)
+            )
             listenLoop()
         } catch (e: Exception) {
             Log.e(TAG, "Voice wake initialization/listening failed", e)
@@ -144,9 +151,11 @@ class VoiceWakeService : Service() {
             if (!inSpeech) {
                 inSpeech = true
                 silenceChunks = 0
-                while (preRoll.isNotEmpty()) feed(preRoll.removeFirst())
+                while (preRoll.isNotEmpty()) {
+                    lastWakeAt = feedAndDetect(preRoll.removeFirst(), lastWakeAt)
+                }
             }
-            feed(buffer.copyOf(count))
+            lastWakeAt = feedAndDetect(buffer.copyOf(count), lastWakeAt)
             if (rms < threshold) silenceChunks++ else silenceChunks = 0
             if (silenceChunks >= 8) {
                 val result = recognizer?.finalResult.orEmpty()
@@ -173,6 +182,12 @@ class VoiceWakeService : Service() {
         recognizer?.acceptWaveForm(bytes, bytes.size)
     }
 
+    private fun feedAndDetect(samples: ShortArray, previousWake: Long): Long {
+        feed(samples)
+        val partial = recognizer?.partialResult.orEmpty()
+        return detectKeyword(partial, System.currentTimeMillis(), previousWake) ?: previousWake
+    }
+
     private fun rms(samples: ShortArray, count: Int): Double {
         var sum = 0.0
         for (i in 0 until count) {
@@ -184,13 +199,19 @@ class VoiceWakeService : Service() {
 
     private fun detectKeyword(jsonText: String, now: Long, previousWake: Long): Long? {
         return try {
-            val text = JSONObject(jsonText).optString("text").lowercase()
-            if (text.isBlank() || now - previousWake < 5000L) return null
-            val selected = (prefs.getString(VoiceWakeConfig.KEY_KEYWORD, "kofaxa") ?: "kofaxa").lowercase()
-            val matched = text.contains(selected) || text.contains("kofaxa") ||
-                text.contains("wake up") || text.contains("computer")
-            if (!matched) return null
-            Log.i(TAG, "Wake phrase detected: $text")
+            val json = JSONObject(jsonText)
+            val recognized = VoiceWakeConfig.normalizeKeyword(
+                json.optString("partial", json.optString("text"))
+            )
+            val selected = VoiceWakeConfig.normalizeKeyword(
+                prefs.getString(VoiceWakeConfig.KEY_KEYWORD, VoiceWakeConfig.DEFAULT_KEYWORD)
+                    ?: VoiceWakeConfig.DEFAULT_KEYWORD
+            )
+            if (recognized.isBlank() || recognized != selected || now - previousWake < 5000L) {
+                return null
+            }
+
+            Log.i(TAG, "Configured wake phrase detected")
             val power = getSystemService(Context.POWER_SERVICE) as PowerManager
             if (!power.isInteractive) screenController.wakeScreen()
             now
@@ -223,7 +244,7 @@ class VoiceWakeService : Service() {
         }
         val notification = builder.setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentTitle("KOFAXA")
-            .setContentText("Listening for your wake phrase")
+            .setContentText("Listening for your configured wake phrase")
             .setCategory(Notification.CATEGORY_SERVICE)
             .setOngoing(true)
             .build()
