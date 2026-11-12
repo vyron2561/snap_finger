@@ -348,7 +348,6 @@ class MainActivity : Activity() {
             return
         }
     }
-    }
 
     private fun space(parent: LinearLayout, height: Int) {
         parent.addView(View(this), LinearLayout.LayoutParams(1, dp(height)))
