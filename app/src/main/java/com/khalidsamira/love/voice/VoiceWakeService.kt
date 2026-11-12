@@ -74,10 +74,17 @@ class VoiceWakeService : Service() {
 
     private fun initializeAndListen() {
         try {
-            val modelDir = VoskModelManager(this).modelDir()
-            if (!VoskModelManager(this).isModelReady()) error("Vosk model is not ready")
+            val manager = VoskModelManager(this)
+            val modelDir = manager.modelDir()
+            if (!manager.isModelReady()) error("Vosk model is not ready")
             model = Model(modelDir.absolutePath)
-            recognizer = Recognizer(model, VoiceWakeConfig.SAMPLE_RATE.toFloat(), VoiceWakeConfig.GRAMMAR_JSON)
+            val keyword = prefs.getString(VoiceWakeConfig.KEY_KEYWORD, VoiceWakeConfig.DEFAULT_KEYWORD)
+                ?: VoiceWakeConfig.DEFAULT_KEYWORD
+            recognizer = Recognizer(
+                model,
+                VoiceWakeConfig.SAMPLE_RATE.toFloat(),
+                VoiceWakeConfig.grammarJson(keyword)
+            )
             listenLoop()
         } catch (e: Exception) {
             Log.e(TAG, "Voice wake initialization/listening failed", e)
@@ -184,13 +191,18 @@ class VoiceWakeService : Service() {
 
     private fun detectKeyword(jsonText: String, now: Long, previousWake: Long): Long? {
         return try {
-            val text = JSONObject(jsonText).optString("text").lowercase()
-            if (text.isBlank() || now - previousWake < 5000L) return null
-            val selected = (prefs.getString(VoiceWakeConfig.KEY_KEYWORD, "kofaxa") ?: "kofaxa").lowercase()
-            val matched = text.contains(selected) || text.contains("kofasha") || text.contains("kofaxa") ||
-                text.contains("wake up") || text.contains("computer")
-            if (!matched) return null
-            Log.i(TAG, "Wake phrase detected: $text")
+            val recognized = VoiceWakeConfig.normalizeKeyword(
+                JSONObject(jsonText).optString("text")
+            )
+            val selected = VoiceWakeConfig.normalizeKeyword(
+                prefs.getString(VoiceWakeConfig.KEY_KEYWORD, VoiceWakeConfig.DEFAULT_KEYWORD)
+                    ?: VoiceWakeConfig.DEFAULT_KEYWORD
+            )
+            if (recognized.isBlank() || recognized != selected || now - previousWake < 5000L) {
+                return null
+            }
+
+            Log.i(TAG, "Configured wake phrase detected")
             val power = getSystemService(Context.POWER_SERVICE) as PowerManager
             if (!power.isInteractive) screenController.wakeScreen()
             now
@@ -223,7 +235,7 @@ class VoiceWakeService : Service() {
         }
         val notification = builder.setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentTitle("KOFAXA")
-            .setContentText("Listening for your wake phrase")
+            .setContentText("Listening for your configured wake phrase")
             .setCategory(Notification.CATEGORY_SERVICE)
             .setOngoing(true)
             .build()
