@@ -15,7 +15,7 @@ object VoiceWakeConfig {
     const val CHUNK_SIZE = 4000
     const val VAD_BASE_THRESHOLD = 500.0
     const val VAD_NOISE_FACTOR = 2.5
-    const val GRAMMAR_JSON = """["kofaxa", "wake up", "computer", "[unk]"]"""
+    const val GRAMMAR_JSON = """["kofasha", "kofaxa", "wake up", "computer", "[unk]"]"""
     const val NOTIFICATION_ID = 913
     const val CHANNEL_ID = "voice_wake_channel"
 }
