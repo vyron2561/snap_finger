@@ -151,9 +151,11 @@ class VoiceWakeService : Service() {
             if (!inSpeech) {
                 inSpeech = true
                 silenceChunks = 0
-                while (preRoll.isNotEmpty()) feed(preRoll.removeFirst())
+                while (preRoll.isNotEmpty()) {
+                    lastWakeAt = feedAndDetect(preRoll.removeFirst(), lastWakeAt)
+                }
             }
-            feed(buffer.copyOf(count))
+            lastWakeAt = feedAndDetect(buffer.copyOf(count), lastWakeAt)
             if (rms < threshold) silenceChunks++ else silenceChunks = 0
             if (silenceChunks >= 8) {
                 val result = recognizer?.finalResult.orEmpty()
@@ -180,6 +182,12 @@ class VoiceWakeService : Service() {
         recognizer?.acceptWaveForm(bytes, bytes.size)
     }
 
+    private fun feedAndDetect(samples: ShortArray, previousWake: Long): Long {
+        feed(samples)
+        val partial = recognizer?.partialResult.orEmpty()
+        return detectKeyword(partial, System.currentTimeMillis(), previousWake) ?: previousWake
+    }
+
     private fun rms(samples: ShortArray, count: Int): Double {
         var sum = 0.0
         for (i in 0 until count) {
@@ -191,8 +199,9 @@ class VoiceWakeService : Service() {
 
     private fun detectKeyword(jsonText: String, now: Long, previousWake: Long): Long? {
         return try {
+            val json = JSONObject(jsonText)
             val recognized = VoiceWakeConfig.normalizeKeyword(
-                JSONObject(jsonText).optString("text")
+                json.optString("partial", json.optString("text"))
             )
             val selected = VoiceWakeConfig.normalizeKeyword(
                 prefs.getString(VoiceWakeConfig.KEY_KEYWORD, VoiceWakeConfig.DEFAULT_KEYWORD)
