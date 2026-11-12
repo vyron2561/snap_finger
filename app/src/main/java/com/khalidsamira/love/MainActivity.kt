@@ -55,8 +55,8 @@ class MainActivity : Activity() {
 
         private val DEFAULT_ACCENT = Color.rgb(167, 139, 250)
         private val DEFAULT_BRIGHT = Color.rgb(196, 181, 253)
-        private val DEFAULT_MUTED = Color.rgb(166, 157, 184)
-        private val DEFAULT_BORDER = Color.rgb(73, 52, 111)
+        private val DEFAULT_MUTED = Color.rgb(160, 160, 176)
+        private val DEFAULT_BORDER = Color.rgb(88, 62, 140)
         private val DEFAULT_BACKGROUND = Color.rgb(8, 7, 13)
     }
 
@@ -115,13 +115,14 @@ class MainActivity : Activity() {
 
     private fun loadAppearance() {
         accent = prefs.getInt(KEY_ACCENT, DEFAULT_ACCENT)
-        bright = mix(accent, Color.WHITE, 0.24f)
-        muted = Color.rgb(166, 157, 184)
-        border = mix(accent, Color.BLACK, 0.58f)
+        bright = if (accent == DEFAULT_ACCENT) DEFAULT_BRIGHT else mix(accent, Color.WHITE, 0.24f)
+        muted = DEFAULT_MUTED
+        border = if (accent == DEFAULT_ACCENT) DEFAULT_BORDER else mix(accent, Color.BLACK, 0.58f)
     }
 
     private fun buildScreen() {
         val screen = FrameLayout(this)
+        screen.setBackgroundColor(DEFAULT_BACKGROUND)
 
         // Background layer: default KOFAXA artwork, a chosen gallery image, or a custom solid color.
         val backgroundImage = ImageView(this).apply {
@@ -147,9 +148,9 @@ class MainActivity : Activity() {
         screen.addView(backgroundImage, FrameLayout.LayoutParams(-1, -1))
 
         val imageOverlay = View(this).apply {
-            val hasPhoto = prefs.getString(KEY_BACKGROUND_URI, null) != null
+            val hasImage = !prefs.contains(KEY_BACKGROUND_COLOR)
             setBackgroundColor(Color.BLACK)
-            alpha = if (hasPhoto) 0.42f else 0f
+            alpha = if (hasImage) 0.42f else 0f
         }
         screen.addView(imageOverlay, FrameLayout.LayoutParams(-1, -1))
 
@@ -271,13 +272,8 @@ class MainActivity : Activity() {
         footer.letterSpacing = 0.20f
         root.addView(footer, full())
 
-        val barColor = if (prefs.contains(KEY_BACKGROUND_COLOR)) {
-            darken(prefs.getInt(KEY_BACKGROUND_COLOR, DEFAULT_BACKGROUND), 0.48f)
-        } else {
-            Color.rgb(8, 7, 13)
-        }
-        window.statusBarColor = barColor
-        window.navigationBarColor = barColor
+        window.statusBarColor = Color.rgb(8, 7, 13)
+        window.navigationBarColor = Color.rgb(8, 7, 13)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             window.decorView.systemUiVisibility = 0
         }
@@ -1014,8 +1010,8 @@ class MainActivity : Activity() {
         toggleButton.text = if (enabled) "Disable Snap to Wake" else "Enable Snap to Wake"
         toggleButton.setTextColor(Color.rgb(18, 12, 30))
         toggleButton.background = rounded(
-            if (enabled) bright else accent,
-            28, bright, 1
+            if (enabled) DEFAULT_BRIGHT else DEFAULT_ACCENT,
+            28, DEFAULT_BRIGHT, 1
         )
     }
 
@@ -1025,13 +1021,13 @@ class MainActivity : Activity() {
         background = GradientDrawable(
             GradientDrawable.Orientation.TL_BR,
             intArrayOf(
-                mix(accent, Color.rgb(20, 16, 31), 0.68f),
-                Color.rgb(19, 15, 29),
-                mix(accent, Color.rgb(19, 15, 29), 0.78f)
+                mix(accent, Color.rgb(12, 10, 18), 0.75f),
+                Color.rgb(10, 8, 15),
+                mix(accent, Color.rgb(8, 7, 13), 0.82f)
             )
         ).apply {
-            cornerRadius = dp(20).toFloat()
-            setStroke(dp(1), border)
+            cornerRadius = dp(22).toFloat()
+            setStroke(dp(1), Color.rgb(60, 45, 95))
         }
         elevation = dp(4).toFloat()
     }
