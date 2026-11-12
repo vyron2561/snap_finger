@@ -3,39 +3,25 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-dependencies {
-    implementation("androidx.work:work-runtime-ktx:2.10.1")
-    implementation("androidx.core:core-ktx:1.16.0")
-}
-
 android {
     namespace = "com.khalidsamira.love"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.khalidsamira.love"
-        minSdk = 23
-        targetSdk = 35
-        versionCode = providers.gradleProperty("appVersionCode").orElse("1").get().toInt()
-        versionName = providers.gradleProperty("appVersionName").orElse("1.0.0").get()
-    }
-
-    signingConfigs {
-        create("release") {
-            val storeFilePath = System.getenv("KOFAXA_KEYSTORE_FILE")
-            if (!storeFilePath.isNullOrBlank()) {
-                storeFile = file(storeFilePath)
-                storePassword = System.getenv("KOFAXA_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KOFAXA_KEY_ALIAS")
-                keyPassword = System.getenv("KOFAXA_KEY_PASSWORD")
-            }
-        }
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 2
+        versionName = "0.2.0"
     }
 
     buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+        release {
             isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -47,4 +33,11 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+}
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
 }
