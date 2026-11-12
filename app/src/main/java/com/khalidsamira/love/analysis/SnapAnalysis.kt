@@ -11,5 +11,7 @@ data class SnapAnalysis(
     val otherAverage: Double,
     val decayRatio: Double,
     val maxIndex: Int,
-    val looksLikeSnap: Boolean
+    val looksLikeSnap: Boolean,
+    val isClapLike: Boolean,
+    val spectral: SpectralFeatures
 )
