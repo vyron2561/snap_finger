@@ -76,14 +76,9 @@ object AppUpdater {
 
                 activity.runOnUiThread {
                     if (!activity.isFinishing) {
-                        AlertDialog.Builder(activity)
-                            .setTitle("KOFAXA update available")
-                            .setMessage("Version $tag is available. Would you like to download and install it now?")
-                            .setNegativeButton("Later", null)
-                            .setPositiveButton("Update now") { _, _ ->
-                                downloadAndInstall(activity, url, tag, expectedHash)
-                            }
-                            .show()
+                        KofaxaDialog.showUpdate(activity, tag) {
+                            downloadAndInstall(activity, url, tag, expectedHash)
+                        }
                     }
                 }
             } catch (error: Exception) {
@@ -97,14 +92,9 @@ object AppUpdater {
     }
 
     private fun downloadAndInstall(activity: Activity, downloadUrl: String, tag: String, expectedHash: String) {
-        val progress = ProgressDialog(activity).apply {
-            setTitle("Downloading KOFAXA")
-            setMessage("Preparing update…")
-            setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-            setCancelable(false)
-            isIndeterminate = true
-            show()
-        }
+        val progress = KofaxaDialog.showProgress(
+            activity, "Updating KOFAXA", "Preparing secure download…"
+        )
 
         executor.execute {
             try {
@@ -131,11 +121,9 @@ object AppUpdater {
                             output.write(buffer, 0, count)
                             downloaded += count
                             if (total > 0) activity.runOnUiThread {
-                                if (progress.isShowing) {
-                                    progress.isIndeterminate = false
-                                    progress.max = 100
-                                    progress.progress = ((downloaded * 100) / total).toInt()
-                                    progress.setMessage("Downloading $tag…")
+                                if (progress.dialog.isShowing) {
+                                    val percent = ((downloaded * 100) / total).toInt()
+                                    progress.update(percent, "Downloading version $tag…")
                                 }
                             }
                         }
@@ -151,13 +139,13 @@ object AppUpdater {
                 }
 
                 activity.runOnUiThread {
-                    if (progress.isShowing) progress.dismiss()
+                    if (progress.dialog.isShowing) progress.dialog.dismiss()
                     Toast.makeText(activity, "Update downloaded and verified", Toast.LENGTH_SHORT).show()
                     continueToInstaller(activity, apk)
                 }
             } catch (error: Exception) {
                 activity.runOnUiThread {
-                    if (progress.isShowing) progress.dismiss()
+                    if (progress.dialog.isShowing) progress.dialog.dismiss()
                     Toast.makeText(activity, "Update failed: ${error.message}", Toast.LENGTH_LONG).show()
                 }
             }

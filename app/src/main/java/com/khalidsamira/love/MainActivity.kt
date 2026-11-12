@@ -286,25 +286,21 @@ class MainActivity : Activity() {
     }
 
     private fun downloadVoiceModel(manager: VoskModelManager) {
-        val progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
-            max = 100
-            progress = 0
-            setPadding(dp(20), dp(20), dp(20), dp(20))
-        }
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Downloading voice model")
-            .setMessage("One-time download · about 40 MB")
-            .setView(progress)
-            .setNegativeButton("Cancel", null)
-            .create()
-        dialog.setCancelable(false)
-        dialog.show()
+        val progress = KofaxaDialog.showProgress(
+            this, "Preparing voice wake", "Downloading the offline voice model · about 40 MB"
+        )
         val executor = Executors.newSingleThreadExecutor()
         executor.execute {
-            val result = manager.downloadModel { pct -> runOnUiThread { if (!isFinishing) progress.progress = pct } }
+            val result = manager.downloadModel { pct ->
+                runOnUiThread {
+                    if (!isFinishing && progress.dialog.isShowing) {
+                        progress.update(pct, "Downloading offline voice model…")
+                    }
+                }
+            }
             runOnUiThread {
                 if (!isFinishing) {
-                    dialog.dismiss()
+                    progress.dialog.dismiss()
                     if (result.isSuccess) {
                         Toast.makeText(this, "Voice model downloaded", Toast.LENGTH_SHORT).show()
                         refreshVoiceCard()
