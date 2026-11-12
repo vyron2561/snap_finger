@@ -25,11 +25,6 @@ class SnapWakeService : Service() {
         const val ACTION_STOP = "com.khalidsamira.love.STOP_SNAP"
         const val ACTION_UPDATE_SETTINGS = "com.khalidsamira.love.UPDATE_SETTINGS"
         const val ACTION_LEARN_SIGNATURE = "com.khalidsamira.love.LEARN_SIGNATURE"
-        private const val SIGNATURE_PREFS = "snap_signature"
-        private const val SIGNATURE_KEY = "template"
-        private const val SAMPLE_KEY = "samples"
-        private const val COUNT_KEY = "learn_count"
-        private const val REQUIRED_SAMPLES = 10
 
         @Volatile
         var isActive: Boolean = false
@@ -63,9 +58,7 @@ class SnapWakeService : Service() {
 
             ACTION_START, null -> startListening()
             ACTION_LEARN_SIGNATURE -> {
-                getSharedPreferences(SIGNATURE_PREFS, MODE_PRIVATE).edit()
-                    .putBoolean("learning", true).putInt(COUNT_KEY, 0)
-                    .remove(SAMPLE_KEY).remove(SIGNATURE_KEY).apply()
+                SnapSignatureManager(this).startLearning()
                 startListening()
             }
 
@@ -222,7 +215,7 @@ class SnapWakeService : Service() {
                             "decay=${analysis.decayRatio}"
                     )
 
-                    val feature = signatureManager.createFeature(samples)
+                    val feature = signatureManager.createRichFeature(samples, analysis)
 
                     if (signatureManager.isLearning()) {
                         signatureManager.addLearningSample(feature)
