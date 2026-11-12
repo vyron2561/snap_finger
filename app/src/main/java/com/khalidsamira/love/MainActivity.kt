@@ -53,19 +53,6 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        buildScreen()
-        AppUpdater.checkForUpdates(this, manual = false)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (::actionButton.isInitialized) refreshState()
-        refreshVoiceCard()
-        AppUpdater.installPendingUpdate(this)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
