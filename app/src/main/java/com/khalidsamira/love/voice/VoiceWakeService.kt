@@ -40,6 +40,7 @@ class VoiceWakeService : Service() {
     private var worker: Thread? = null
     private lateinit var prefs: android.content.SharedPreferences
     private lateinit var screenController: ScreenController
+    @Volatile private var cpuWakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -68,6 +69,7 @@ class VoiceWakeService : Service() {
         }
         running = true
         isActive = true
+        acquireCpuWakeLock()
         worker = thread(name = "KofaxaVoiceWake") { initializeAndListen() }
         return START_STICKY
     }
@@ -127,8 +129,44 @@ class VoiceWakeService : Service() {
             try { model?.close() } catch (_: Exception) {}
             recognizer = null
             model = null
+            releaseCpuWakeLock()
             stopForegroundCompat()
             stopSelf()
+        }
+    }
+
+    /**
+     * Keep the CPU awake while the user has explicitly enabled continuous
+     * microphone listening. This does not keep the process immortal; it only
+     * prevents deep sleep from suspending the audio-processing thread.
+     */
+    private fun acquireCpuWakeLock() {
+        try {
+            val power = getSystemService(Context.POWER_SERVICE) as PowerManager
+            synchronized(this) {
+                if (cpuWakeLock?.isHeld == true) return
+                cpuWakeLock = power.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK,
+                    "KOFAXA:VoiceListening"
+                ).apply {
+                    setReferenceCounted(false)
+                    acquire()
+                }
+            }
+        } catch (error: Exception) {
+            Log.e(TAG, "Unable to acquire CPU wake lock", error)
+        }
+    }
+
+    private fun releaseCpuWakeLock() {
+        synchronized(this) {
+            try {
+                cpuWakeLock?.let { if (it.isHeld) it.release() }
+            } catch (error: Exception) {
+                Log.w(TAG, "Unable to release CPU wake lock cleanly", error)
+            } finally {
+                cpuWakeLock = null
+            }
         }
     }
 
@@ -308,6 +346,7 @@ class VoiceWakeService : Service() {
         running = false
         try { audioRecord?.stop() } catch (_: Exception) {}
         worker?.interrupt()
+        releaseCpuWakeLock()
         isActive = false
         super.onDestroy()
     }
