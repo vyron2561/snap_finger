@@ -3,7 +3,6 @@ package com.khalidsamira.love.voice
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
-import android.os.Build
 import android.os.PowerManager
 import android.util.Log
 import android.view.KeyEvent
