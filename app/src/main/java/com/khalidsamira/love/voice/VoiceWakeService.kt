@@ -73,21 +73,52 @@ class VoiceWakeService : Service() {
     }
 
     private fun initializeAndListen() {
+        var retryDelayMs = 1_000L
         try {
-            val manager = VoskModelManager(this)
-            val modelDir = manager.modelDir()
-            if (!manager.isModelReady()) error("Vosk model is not ready")
-            model = Model(modelDir.absolutePath)
-            val keyword = prefs.getString(VoiceWakeConfig.KEY_KEYWORD, VoiceWakeConfig.DEFAULT_KEYWORD)
-                ?: VoiceWakeConfig.DEFAULT_KEYWORD
-            recognizer = Recognizer(
-                model,
-                VoiceWakeConfig.SAMPLE_RATE.toFloat(),
-                VoiceWakeConfig.grammarJson(keyword)
-            )
-            listenLoop()
-        } catch (e: Exception) {
-            Log.e(TAG, "Voice wake initialization/listening failed", e)
+            while (running) {
+                try {
+                    if (model == null) {
+                        val manager = VoskModelManager(this)
+                        val modelDir = manager.modelDir()
+                        if (!manager.isModelReady()) error("Vosk model is not ready")
+                        model = Model(modelDir.absolutePath)
+                    }
+                    if (recognizer == null) {
+                        val keyword = prefs.getString(
+                            VoiceWakeConfig.KEY_KEYWORD,
+                            VoiceWakeConfig.DEFAULT_KEYWORD
+                        ) ?: VoiceWakeConfig.DEFAULT_KEYWORD
+                        recognizer = Recognizer(
+                            model,
+                            VoiceWakeConfig.SAMPLE_RATE.toFloat(),
+                            VoiceWakeConfig.grammarJson(keyword)
+                        )
+                    }
+
+                    listenLoop()
+                    if (running) error("Audio listener stopped unexpectedly")
+                    retryDelayMs = 1_000L
+                } catch (e: InterruptedException) {
+                    if (running) Log.w(TAG, "Voice listener interrupted; retrying", e)
+                    Thread.currentThread().interrupt()
+                    break
+                } catch (e: Exception) {
+                    Log.e(TAG, "Voice listener failed; restarting audio pipeline", e)
+                    releaseAudio()
+                    try { recognizer?.close() } catch (_: Exception) {}
+                    recognizer = null
+
+                    if (running) {
+                        try {
+                            Thread.sleep(retryDelayMs)
+                        } catch (_: InterruptedException) {
+                            Thread.currentThread().interrupt()
+                            break
+                        }
+                        retryDelayMs = (retryDelayMs * 2).coerceAtMost(30_000L)
+                    }
+                }
+            }
         } finally {
             running = false
             isActive = false
@@ -139,7 +170,8 @@ class VoiceWakeService : Service() {
                 continue
             }
             val count = record.read(buffer, 0, buffer.size)
-            if (count <= 0) continue
+            if (count == 0) continue
+            if (count < 0) error("AudioRecord.read failed with code $count")
             val rms = rms(buffer, count)
             val threshold = maxOf(VoiceWakeConfig.VAD_BASE_THRESHOLD, noiseFloor * VoiceWakeConfig.VAD_NOISE_FACTOR)
             if (!inSpeech && rms < threshold) {
