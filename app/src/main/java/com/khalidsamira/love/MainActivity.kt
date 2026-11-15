@@ -8,6 +8,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings as AndroidSettings
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.view.accessibility.AccessibilityManager
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
@@ -95,6 +97,7 @@ class MainActivity : Activity() {
     private var voiceStartButton: Button? = null
     private var voiceEndButton: Button? = null
     private var voiceKeywordButton: Button? = null
+    private var volumeWakeButton: Button? = null
 
     private fun addVoiceCard(root: LinearLayout) {
         val card = LinearLayout(this).apply {
@@ -166,6 +169,36 @@ class MainActivity : Activity() {
         scheduleRow.addView(voiceEndButton, LinearLayout.LayoutParams(0, dp(40), 1f).apply { leftMargin = dp(8) })
         card.addView(scheduleRow)
         space(card, 8)
+        card.addView(TextView(this).apply {
+            text = "VOLUME BUTTON WAKE"
+            textSize = 10f
+            setTextColor(COLOR_PURPLE)
+            typeface = Typeface.DEFAULT_BOLD
+            letterSpacing = 0.16f
+        })
+        space(card, 6)
+        card.addView(TextView(this).apply {
+            text = "Press Volume Up while the phone is asleep to wake the screen. Android requires you to enable KOFAXA's accessibility service. The volume key will still control volume."
+            textSize = 11f
+            setTextColor(COLOR_MUTED)
+        })
+        space(card, 8)
+        volumeWakeButton = Button(this).apply {
+            textSize = 11f
+            isAllCaps = false
+            setTextColor(COLOR_PURPLE_LIGHT)
+            background = voiceButtonBackground()
+            stateListAnimator = null
+            setOnClickListener {
+                try {
+                    startActivity(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS))
+                } catch (_: Exception) {
+                    Toast.makeText(this@MainActivity, "Open Android Accessibility settings and enable KOFAXA Volume Wake", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        card.addView(volumeWakeButton, LinearLayout.LayoutParams(-1, dp(42)))
+        space(card, 8)
         card.addView(Button(this).apply {
             text = "Disable battery optimization"
             textSize = 11f
@@ -222,6 +255,16 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences(VoiceWakeConfig.PREFS, MODE_PRIVATE)
         voiceStartButton?.text = "Start: %02d:00".format(prefs.getInt(VoiceWakeConfig.KEY_START_HOUR, 0))
         voiceEndButton?.text = "End: %02d:00".format(prefs.getInt(VoiceWakeConfig.KEY_END_HOUR, 0))
+        volumeWakeButton?.text = if (isVolumeWakeAccessibilityEnabled()) "Volume wake · enabled" else "Enable volume button wake"
+    }
+
+    private fun isVolumeWakeAccessibilityEnabled(): Boolean {
+        val manager = getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager
+        return manager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK).any {
+            val info = it.resolveInfo?.serviceInfo
+            info?.packageName == packageName &&
+                info.name == "com.khalidsamira.love.voice.VolumeWakeAccessibilityService"
+        }
     }
 
     private fun editWakeKeyword() {
