@@ -37,6 +37,19 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
+        <service
+            android:name=".voice.VolumeWakeAccessibilityService"
+            android:label="KOFAXA Volume Wake"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/volume_wake_accessibility_service" />
+        </service>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
