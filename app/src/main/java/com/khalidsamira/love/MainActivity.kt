@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings as AndroidSettings
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.view.accessibility.AccessibilityManager
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -253,6 +254,15 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences(VoiceWakeConfig.PREFS, MODE_PRIVATE)
         voiceStartButton?.text = "Start: %02d:00".format(prefs.getInt(VoiceWakeConfig.KEY_START_HOUR, 0))
         voiceEndButton?.text = "End: %02d:00".format(prefs.getInt(VoiceWakeConfig.KEY_END_HOUR, 0))
+    }
+
+    private fun isVolumeWakeAccessibilityEnabled(): Boolean {
+        val manager = getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager
+        return manager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK).any {
+            val info = it.resolveInfo?.serviceInfo
+            info?.packageName == packageName &&
+                info.name == "com.khalidsamira.love.voice.VolumeWakeAccessibilityService"
+        }
     }
 
     private fun editWakeKeyword() {
