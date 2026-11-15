@@ -97,6 +97,7 @@ class MainActivity : Activity() {
     private var voiceStartButton: Button? = null
     private var voiceEndButton: Button? = null
     private var voiceKeywordButton: Button? = null
+    private var volumeWakeButton: Button? = null
 
     private fun addVoiceCard(root: LinearLayout) {
         val card = LinearLayout(this).apply {
@@ -182,8 +183,7 @@ class MainActivity : Activity() {
             setTextColor(COLOR_MUTED)
         })
         space(card, 8)
-        card.addView(Button(this).apply {
-            text = if (isVolumeWakeAccessibilityEnabled()) "Volume wake · enabled" else "Enable volume button wake"
+        volumeWakeButton = Button(this).apply {
             textSize = 11f
             isAllCaps = false
             setTextColor(COLOR_PURPLE_LIGHT)
@@ -196,7 +196,8 @@ class MainActivity : Activity() {
                     Toast.makeText(this@MainActivity, "Open Android Accessibility settings and enable KOFAXA Volume Wake", Toast.LENGTH_LONG).show()
                 }
             }
-        }, LinearLayout.LayoutParams(-1, dp(42)))
+        }
+        card.addView(volumeWakeButton, LinearLayout.LayoutParams(-1, dp(42)))
         space(card, 8)
         card.addView(Button(this).apply {
             text = "Disable battery optimization"
@@ -254,6 +255,7 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences(VoiceWakeConfig.PREFS, MODE_PRIVATE)
         voiceStartButton?.text = "Start: %02d:00".format(prefs.getInt(VoiceWakeConfig.KEY_START_HOUR, 0))
         voiceEndButton?.text = "End: %02d:00".format(prefs.getInt(VoiceWakeConfig.KEY_END_HOUR, 0))
+        volumeWakeButton?.text = if (isVolumeWakeAccessibilityEnabled()) "Volume wake · enabled" else "Enable volume button wake"
     }
 
     private fun isVolumeWakeAccessibilityEnabled(): Boolean {
