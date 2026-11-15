@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings as AndroidSettings
+import android.view.accessibility.AccessibilityManager
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
@@ -165,6 +166,36 @@ class MainActivity : Activity() {
         scheduleRow.addView(voiceStartButton, LinearLayout.LayoutParams(0, dp(40), 1f))
         scheduleRow.addView(voiceEndButton, LinearLayout.LayoutParams(0, dp(40), 1f).apply { leftMargin = dp(8) })
         card.addView(scheduleRow)
+        space(card, 8)
+        card.addView(TextView(this).apply {
+            text = "VOLUME BUTTON WAKE"
+            textSize = 10f
+            setTextColor(COLOR_PURPLE)
+            typeface = Typeface.DEFAULT_BOLD
+            letterSpacing = 0.16f
+        })
+        space(card, 6)
+        card.addView(TextView(this).apply {
+            text = "Press Volume Up while the phone is asleep to wake the screen. Android requires you to enable KOFAXA's accessibility service. The volume key will still control volume."
+            textSize = 11f
+            setTextColor(COLOR_MUTED)
+        })
+        space(card, 8)
+        card.addView(Button(this).apply {
+            text = if (isVolumeWakeAccessibilityEnabled()) "Volume wake · enabled" else "Enable volume button wake"
+            textSize = 11f
+            isAllCaps = false
+            setTextColor(COLOR_PURPLE_LIGHT)
+            background = voiceButtonBackground()
+            stateListAnimator = null
+            setOnClickListener {
+                try {
+                    startActivity(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS))
+                } catch (_: Exception) {
+                    Toast.makeText(this@MainActivity, "Open Android Accessibility settings and enable KOFAXA Volume Wake", Toast.LENGTH_LONG).show()
+                }
+            }
+        }, LinearLayout.LayoutParams(-1, dp(42)))
         space(card, 8)
         card.addView(Button(this).apply {
             text = "Disable battery optimization"
